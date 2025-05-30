@@ -24,53 +24,54 @@ This checklist outlines the steps to build the Minimum Viable Product (MVP) for 
   - [ ] Design and implement reusable UI components (e.g., CustomButton, CustomInput, Card, ListItem, ProgressBar, Header) - Using UI Kitten defaults for now.
   - [ ] Establish a basic theme (colors, typography) - Using UI Kitten defaults for now.
 
-## **Phase 2: User Authentication (Supabase)**
+## **Phase 2: User Authentication (Firebase)**
 
-- [ ] **2.1. Set up Supabase Project:**
-  - [ ] Create a new project on the Supabase dashboard ([https://supabase.com/dashboard/](https://supabase.com/dashboard/)).
-  - [ ] Obtain Project URL and anon (public) API key.
-  - [ ] Configure Supabase JS SDK in your React Native project (`@supabase/supabase-js`).
+- [ ] **2.1. Set up Firebase Project:**
+  - [ ] Create a new project on the Firebase console ([https://console.firebase.google.com/](https://console.firebase.google.com/)).
+  - [ ] Add your React Native app (iOS and Android) to the Firebase project.
+  - [ ] Download configuration files (google-services.json for Android, GoogleService-Info.plist for iOS) and place them in the correct project directories.
+  - [ ] Configure Firebase JS SDK in your React Native project (`@react-native-firebase/app` and other necessary modules like `@react-native-firebase/auth`).
 - [ ] **2.2. Implement Email/Password Authentication:**
   - [ ] Create SignUpScreen UI (email, password, confirm password fields).
-  - [ ] Implement sign-up logic using `supabase.auth.signUp()`.
+  - [ ] Implement sign-up logic using `firebase.auth().createUserWithEmailAndPassword()`.
   - [ ] Create LoginScreen UI (email, password fields).
-  - [ ] Implement login logic using `supabase.auth.signInWithPassword()`.
-  - [ ] Implement logout functionality using `supabase.auth.signOut()`.
-  - [ ] Handle authentication state changes (e.g., redirect to dashboard on login, login screen on logout using `supabase.auth.onAuthStateChange()`).
+  - [ ] Implement login logic using `firebase.auth().signInWithEmailAndPassword()`.
+  - [ ] Implement logout functionality using `firebase.auth().signOut()`.
+  - [ ] Handle authentication state changes (e.g., redirect to dashboard on login, login screen on logout using `firebase.auth().onAuthStateChanged()`).
 - [ ] **2.3. Implement Social Logins (Optional for MVP, but listed in PRD):**
   - [ ] Google Sign-In:
-    - [ ] Configure Google Sign-In in Supabase Authentication settings.
-    - [ ] Install and configure a suitable library for React Native Google Sign-In (e.g., `@react-native-google-signin/google-signin` and handle token exchange or use Supabase's provider method).
+    - [ ] Enable Google Sign-In in Firebase Authentication settings.
+    - [ ] Install and configure a suitable library for React Native Google Sign-In (e.g., `@react-native-google-signin/google-signin` and integrate with Firebase).
     - [ ] Add Google Sign-In button and logic.
   - [ ] Apple Sign-In (iOS only):
-    - [ ] Configure Apple Sign-In in Supabase Authentication settings.
-    - [ ] Install and configure a suitable library for React Native Apple Sign-In (e.g., `@invertase/react-native-apple-authentication` and handle token exchange or use Supabase's provider method).
+    - [ ] Enable Apple Sign-In in Firebase Authentication settings.
+    - [ ] Install and configure a suitable library for React Native Apple Sign-In (e.g., `@invertase/react-native-apple-authentication` and integrate with Firebase).
     - [ ] Add Apple Sign-In button and logic.
 - [ ] **2.4. Password Reset Functionality:**
   - [ ] UI for "Forgot Password" (email input).
-  - [ ] Logic to send password reset email using `supabase.auth.resetPasswordForEmail()`.
+  - [ ] Logic to send password reset email using `firebase.auth().sendPasswordResetEmail()`.
 - [ ] **2.5. Authentication Flow & Protected Routes:**
   - [ ] Implement logic to show auth screens if not logged in, and main app screens if logged in.
   - [ ] Create an AuthLoading/Splash screen to check auth state on app start.
 
-## **Phase 3: Backend (Supabase Database & Edge Functions) & AI Integration**
+## **Phase 3: Backend (Firebase Firestore & Cloud Functions) & AI Integration**
 
-- [ ] **3.1. Set up Supabase Database:**
-  - [ ] Define database tables (e.g., for users, journeys, steps).
-  - [ ] Define Row Level Security (RLS) policies for your tables (start with authenticated users can read/write their own data).
-  - [ ] Plan data structure for users, journeys, and steps (e.g., `users` table, `journeys` table with `user_id` foreign key, `steps` table with `journey_id` foreign key).
-- [ ] **3.2. Set up Supabase Edge Functions (for AI API calls):**
-  - [ ] Initialize Supabase Edge Functions in your project (e.g., using Supabase CLI `supabase functions new <function_name>`). Choose TypeScript or Deno.
-  - [ ] Write a Supabase Edge Function (HTTP callable) that:
+- [ ] **3.1. Set up Firebase Firestore:**
+  - [ ] Define database collections and documents (e.g., for users, journeys, steps).
+  - [ ] Define Firestore Security Rules for your collections (start with authenticated users can read/write their own data).
+  - [ ] Plan data structure for users, journeys, and steps (e.g., `users` collection, `journeys` collection with `userId` field, `steps` subcollection within each journey document).
+- [ ] **3.2. Set up Firebase Cloud Functions (for AI API calls):**
+  - [ ] Initialize Firebase Cloud Functions in your project (e.g., using Firebase CLI `firebase init functions`). Choose TypeScript or JavaScript.
+  - [ ] Write a Firebase Cloud Function (HTTP callable) that:
     - [ ] Takes a user's journey description as input.
     - [ ] Makes a secure call to the Gemini API (or chosen LLM API).
     - [ ] **Prompt Engineering:** Craft a good prompt to instruct the AI to return a list of actionable steps in a structured format (e.g., JSON array of strings or objects).
     - [ ] Parses the AI's response.
     - [ ] Returns the structured steps to the app.
-  - [ ] Deploy the function (`supabase functions deploy <function_name>`).
-  - [ ] Secure the function (e.g., ensure only authenticated users can call it by checking JWT in the function).
+  - [ ] Deploy the function (`firebase deploy --only functions`).
+  - [ ] Secure the function (e.g., ensure only authenticated users can call it by checking authentication token in the function).
 - [ ] **3.3. API Key Management:**
-  - [ ] Securely store your AI API key (e.g., using Supabase Edge Functions environment variables, do NOT hardcode in the app or function).
+  - [ ] Securely store your AI API key (e.g., using Firebase Cloud Functions environment variables, do NOT hardcode in the app or function).
 - [ ] **3.4. Error Handling for AI Integration:**
   - [ ] Handle API errors, rate limits, and invalid responses from the AI service within the Edge Function and app.
   - [ ] Provide appropriate feedback to the user (e.g., "Could not generate steps, please try again").
@@ -80,23 +81,23 @@ This checklist outlines the steps to build the Minimum Viable Product (MVP) for 
 - [ ] **4.1. Create Journey Screen (AddJourneyScreen):**
   - [ ] UI with an input field for the journey title/description.
   - [ ] "Generate Steps" button.
-  - [ ] On button press, call the Supabase Edge Function to get AI-generated steps.
+  - [ ] On button press, call the Firebase Cloud Function to get AI-generated steps.
   - [ ] Display a loading indicator while AI is processing.
 - [ ] **4.2. Display AI-Generated Steps:**
   - [ ] Once steps are received, display them to the user (perhaps in a review/editable list format).
-  - [ ] Logic to save the new journey and its AI-generated steps to Supabase tables under the current user's data.
+  - [ ] Logic to save the new journey and its AI-generated steps to Firebase Firestore under the current user's data.
   - [ ] Navigate to the JourneyDetailScreen for the newly created journey or back to Dashboard.
 - [ ] **4.3. Dashboard Screen (DashboardScreen):**
-  - [ ] Fetch and display a list of the user's active journeys from Supabase tables.
+  - [ ] Fetch and display a list of the user's active journeys from Firebase Firestore.
   - [ ] Each item should show journey title and overall progress (e.g., "2/5 steps completed").
   - [ ] Allow navigation to the JourneyDetailScreen for each journey.
   - [ ] "Add New Journey" button/FAB.
   - [ ] (Optional for MVP) Tabs or filters for "Active" and "Completed" journeys.
 - [ ] **4.4. Journey Detail Screen (JourneyDetailScreen):**
   - [ ] Display journey title.
-  - [ ] Fetch and display the list of steps for the selected journey from Supabase tables.
+  - [ ] Fetch and display the list of steps for the selected journey from Firebase Firestore.
   - [ ] Each step should have a checkbox or similar UI to mark as complete/incomplete.
-  - [ ] Update step completion status in Supabase tables when a checkbox is toggled.
+  - [ ] Update step completion status in Firebase Firestore when a checkbox is toggled.
   - [ ] Update overall journey progress display dynamically.
 - [ ] **4.5. Manual Step Management:**
   - [ ] Ability to manually add a new step to a journey.
@@ -105,10 +106,10 @@ This checklist outlines the steps to build the Minimum Viable Product (MVP) for 
   - [ ] (Optional for MVP) Ability to reorder steps.
 - [ ] **4.6. Mark Journey as Complete:**
   - [ ] Button or option in JourneyDetailScreen to mark the entire journey as complete.
-  - [ ] Update journey status in Supabase tables (e.g., add a `completed_at` timestamp or a `status: 'completed'` field).
+  - [ ] Update journey status in Firebase Firestore (e.g., add a `completedAt` timestamp or a `status: 'completed'` field).
   - [ ] Visually differentiate completed journeys on the Dashboard.
 - [ ] **4.7. Real-time Updates (Optional but Recommended):**
-  - [ ] Use Supabase Realtime subscriptions to update UI automatically when data changes (e.g., journey progress, new steps).
+  - [ ] Use Firebase Firestore real-time listeners (e.g., `onSnapshot`) to update UI automatically when data changes (e.g., journey progress, new steps).
 
 ## **Phase 5: Basic App Functionality**
 
@@ -116,7 +117,7 @@ This checklist outlines the steps to build the Minimum Viable Product (MVP) for 
   - [ ] Basic account management:
     - [ ] Display user email.
     - [ ] Logout button.
-    - [ ] (Optional for MVP) "Delete Account" option (ensure proper data deletion in Supabase tables and Auth).
+    - [ ] (Optional for MVP) "Delete Account" option (ensure proper data deletion in Firebase Firestore and Auth).
   - [ ] Notification Preferences (placeholder for MVP, actual implementation in a later phase if complex).
     - [ ] Simple toggle: "Enable/Disable Reminders" (if implementing basic reminders).
 - [ ] **5.2. Basic Notifications (Optional for MVP, as per PRD):**
@@ -131,7 +132,7 @@ This checklist outlines the steps to build the Minimum Viable Product (MVP) for 
   - [ ] Add icons where appropriate.
   - [ ] Implement loading states and empty states gracefully.
 - [ ] **6.2. Error Handling:**
-  - [ ] Implement user-friendly error messages for network issues, Supabase errors, etc.
+  - [ ] Implement user-friendly error messages for network issues, Firebase errors, etc.
   - [ ] Validate user inputs.
 - [ ] **6.3. Testing:**
   - [ ] Manual testing of all user flows on both iOS and Android (emulators and physical devices).

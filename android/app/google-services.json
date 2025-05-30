@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "454632746273",
+    "project_id": "journey-8e175",
+    "storage_bucket": "journey-8e175.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:454632746273:android:a81ba16c194ba668f7a260",
+        "android_client_info": {
+          "package_name": "com.openjourney.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCcPX6idxeZkz3rvw_DGXp4DYXA_4QWwcA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
