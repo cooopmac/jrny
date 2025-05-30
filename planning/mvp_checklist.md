@@ -8,21 +8,21 @@ This checklist outlines the steps to build the Minimum Viable Product (MVP) for 
   - [x] Install Node.js and npm/yarn.
   - [x] Install React Native CLI or Expo CLI (decide which workflow: Expo Go for faster start, or React Native CLI for more control).
   - [x] Install an IDE (e.g., VS Code) with relevant extensions (ESLint, Prettier, React Native tools).
-  - \[ \] Set up emulators/simulators (Android Studio for Android, Xcode for iOS) or physical devices for testing.
+  - [x] Set up emulators/simulators (Android Studio for Android, Xcode for iOS) or physical devices for testing.
 - [x] **1.2. Create React Native Project:**
   - [x] Initialize a new React Native project (e.g., npx react-native init OpenJourneyApp or npx create-expo-app OpenJourneyApp).
   - [x] Set up project structure (e.g., src folder with screens, components, navigation, services, assets, utils).
 - [x] **1.3. Install Core Libraries:**
   - [x] Navigation: React Navigation (@react-navigation/native, @react-navigation/stack, @react-navigation/bottom-tabs if needed) - Switched to expo-router.
-  - [x] UI Kitten / Paper / NativeBase (Optional, for pre-built UI components, or plan for custom styling) - Switched to gluestack-ui.
+  - [x] UI Kitten / Paper / NativeBase (Optional, for pre-built UI components, or plan for custom styling) - Using UI Kitten.
   - [x] Vector Icons (react-native-vector-icons) - Used @expo/vector-icons.
   - [ ] State Management (Optional for MVP if simple, but consider Zustand or Redux Toolkit for scalability).
 - [x] **1.4. Basic App Navigation:**
   - [x] Implement a basic stack navigator (Done with expo-router).
-  - [x] Define initial screens (e.g., AuthLoadingScreen, LoginScreen, SignUpScreen, DashboardScreen, JourneyDetailScreen, AddJourneyScreen, SettingsScreen).
-- [x] **1.5. Core UI Components:**
-  - [x] Design and implement reusable UI components (e.g., CustomButton, CustomInput, Card, ListItem, ProgressBar, Header) - Using gluestack-ui defaults for now.
-  - [x] Establish a basic theme (colors, typography) - Using gluestack-ui defaults for now.
+  - [x] Define initial screens (e.g., AuthLoadingScreen, LoginScreen, SignUpScreen).
+- [ ] **1.5. Core UI Components:**
+  - [ ] Design and implement reusable UI components (e.g., CustomButton, CustomInput, Card, ListItem, ProgressBar, Header) - Using UI Kitten defaults for now.
+  - [ ] Establish a basic theme (colors, typography) - Using UI Kitten defaults for now.
 
 ## **Phase 2: User Authentication (Supabase)**
 
