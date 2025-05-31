@@ -17,6 +17,8 @@ export default function Index() {
         justifyContent: "space-between",
         alignItems: "center",
         paddingHorizontal: 20,
+        backgroundColor: "#f1f2f4",
+        paddingBottom: 20,
       }}
     >
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
