@@ -1,4 +1,5 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getAuth } from "@react-native-firebase/auth";
 import firestore from "@react-native-firebase/firestore";
 import { Card, Layout } from "@ui-kitten/components";
@@ -13,6 +14,9 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+
+// Key for AsyncStorage (must match the one in _layout.tsx and home.tsx)
+const LOGIN_STREAK_COUNT_KEY = "@App:loginStreakCount";
 
 // Define Journey type/interface
 interface Journey {
@@ -32,6 +36,24 @@ export default function JourneysScreen() {
   const router = useRouter();
   const [journeys, setJourneys] = useState<Journey[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loginStreak, setLoginStreak] = useState(0);
+
+  // Effect for fetching login streak
+  useEffect(() => {
+    const fetchLoginStreak = async () => {
+      try {
+        const streakCountString = await AsyncStorage.getItem(
+          LOGIN_STREAK_COUNT_KEY
+        );
+        if (streakCountString) {
+          setLoginStreak(parseInt(streakCountString, 10));
+        }
+      } catch (error) {
+        console.error("Failed to fetch login streak for display:", error);
+      }
+    };
+    fetchLoginStreak();
+  }, []);
 
   useEffect(() => {
     const auth = getAuth();
@@ -93,15 +115,22 @@ export default function JourneysScreen() {
 
   return (
     <Layout style={styles.container}>
-      <View style={styles.headerContainer}>
-        <Text style={styles.screenTitle}>Your Journeys</Text>
-        <TouchableOpacity
-          style={styles.createButton}
-          onPress={handleCreateNewJourney}
-        >
-          <Ionicons name="add-circle-outline" size={28} color="#007AFF" />
-          <Text style={styles.createButtonText}>New Journey</Text>
-        </TouchableOpacity>
+      <View style={styles.stickyHeaderContainer}>
+        <Text style={styles.headerTitle}>your journeys.</Text>
+        <View style={styles.headerRightItemsContainer}>
+          {loginStreak > 0 && (
+            <View style={styles.streakContainer}>
+              <Ionicons name="flame-outline" size={20} color="#FFC107" />
+              <Text style={styles.streakText}>{loginStreak}</Text>
+            </View>
+          )}
+          <TouchableOpacity
+            style={styles.createButton}
+            onPress={handleCreateNewJourney}
+          >
+            <Ionicons name="add-circle-outline" size={24} color="#000000" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {journeys.length > 0 ? (
@@ -124,7 +153,6 @@ export default function JourneysScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 15,
     backgroundColor: "#f1f2f4",
   },
   loadingContainer: {
@@ -133,36 +161,52 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#f1f2f4",
   },
-  headerContainer: {
+  stickyHeaderContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 20,
+    paddingTop: 20,
+    paddingBottom: 20,
+    backgroundColor: "#f7f9fc",
+    paddingHorizontal: 20,
+    marginBottom: 10,
   },
-  screenTitle: {
-    fontSize: 28,
-    fontFamily: "Gabarito-Bold",
-    color: "#333",
+  headerTitle: {
+    fontFamily: "Gabarito-ExtraBold",
+    fontSize: 36,
+    color: "#000000",
   },
-  createButton: {
+  headerRightItemsContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#EFEFF4",
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 20,
   },
-  createButtonText: {
-    marginLeft: 8,
+  streakContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFF3E0",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 15,
+    marginRight: 10,
+  },
+  streakText: {
+    fontFamily: "Gabarito-Bold",
     fontSize: 16,
-    fontFamily: "Gabarito-Medium",
-    color: "#007AFF",
+    color: "#FF9800",
+    marginLeft: 5,
+  },
+  createButton: {
+    padding: 5,
   },
   listContentContainer: {
+    paddingHorizontal: 15,
     paddingBottom: 20,
   },
   journeyCard: {
     marginBottom: 15,
+    borderRadius: 25,
+    borderColor: "#ffffff",
+    borderWidth: 1,
   },
   journeyCardHeader: {
     flexDirection: "row",
@@ -183,16 +227,19 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    paddingHorizontal: 20,
   },
   emptyText: {
     fontSize: 18,
     fontFamily: "Gabarito-Regular",
     color: "#555",
     marginBottom: 10,
+    textAlign: "center",
   },
   emptySubText: {
     fontSize: 16,
     fontFamily: "Gabarito-Light",
     color: "#777",
+    textAlign: "center",
   },
 });
