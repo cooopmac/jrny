@@ -66,7 +66,9 @@ export default function RootLayout() {
       SplashScreen.hideAsync();
       if (user) {
         updateLoginStreak();
-        router.replace("/home");
+        router.replace("/(tabs)/home");
+      } else {
+        router.replace("/");
       }
     }
   }, [fontsLoaded, appInitialized, authInitializing, user, router]);
@@ -81,7 +83,7 @@ export default function RootLayout() {
         <ApplicationProvider {...eva} theme={eva.light}>
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="index" />
-            <Stack.Screen name="home" />
+            <Stack.Screen name="(tabs)" />
           </Stack>
           <Toast />
         </ApplicationProvider>

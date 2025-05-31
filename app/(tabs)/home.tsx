@@ -3,7 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage"; // Import 
 import { Card, Layout, Text } from "@ui-kitten/components";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Calendar } from "react-native-calendars"; // Import Calendar
 import CircularProgress from "react-native-circular-progress-indicator";
 
@@ -120,12 +120,22 @@ export default function HomeScreen() {
                 : "you got this!"}
             </Text>
             <Card style={styles.focusCardButton}>
-              <Text style={styles.focusCardButtonText}>view your journies</Text>
+              <Text style={styles.focusCardButtonText}>
+                view your journeys.
+              </Text>
             </Card>
           </View>
         </Card>
 
-        <Text style={styles.sectionTitle}>active journies.</Text>
+        <View style={styles.sectionHeaderContainer}>
+          <Text style={styles.sectionTitle}>active journies.</Text>
+          <TouchableOpacity
+            onPress={() => console.log("Add button pressed")}
+            style={styles.addButton}
+          >
+            <Ionicons name="add-circle-outline" size={28} color="#333333" />
+          </TouchableOpacity>
+        </View>
         {mockActiveGoals.length > 0 ? (
           mockActiveGoals.map((goal) => renderGoalItem({ item: goal }))
         ) : (
@@ -137,51 +147,28 @@ export default function HomeScreen() {
         <Text style={[styles.sectionTitle]}>activity calendar.</Text>
         <View style={styles.calendarContainer}>
           <Calendar
-            // Initially visible month. Default = Date()
             current={new Date().toISOString().split("T")[0]}
-            // Minimum date that can be selected, dates before minDate will be grayed out. Default = undefined
             minDate={"2024-01-01"}
-            // Maximum date that can be selected, dates after maxDate will be grayed out. Default = undefined
             maxDate={"2024-12-31"}
-            // Handler which gets executed on day press. Default = undefined
             onDayPress={(day) => {
               console.log("selected day", day);
             }}
-            // Month format in calendar title. Formatting values: http://arshaw.com/xdate/#Formatting
-            monthFormat={"yyyy"}
-            // Handler which gets executed when visible month changes in calendar. Default = undefined
             onMonthChange={(month) => {
               console.log("month changed", month);
             }}
-            // Hide month navigation arrows. Default = false
             hideArrows={true}
-            // Replace default arrows with custom ones (direction can be 'left' or 'right')
-            // renderArrow={(direction) => (<Arrow/>)}
-            // Do not show days of other months in month page. Default = false
             hideExtraDays={true}
-            // If hideArrows=false and hideExtraDays=false do not switch month when tapping on greyed out
-            // day from another month that is visible in calendar page. Default = false
             disableMonthChange={true}
-            // If firstDay=1 week starts from Monday. Note that dayNames and dayNamesShort should still start from Sunday.
             firstDay={1}
-            // Hide day names. Default = false
             hideDayNames={false}
-            // Show week numbers to the left. Default = false
             showWeekNumbers={false}
-            // Handler which gets executed when press arrow icon left. It receive a callback can go back month
             onPressArrowLeft={(subtractMonth) => subtractMonth()}
-            // Handler which gets executed when press arrow icon right. It receive a callback can go next month
             onPressArrowRight={(addMonth) => addMonth()}
-            // Disable all touch events for disabled days. can be override with disableTouchEvent in markedDates
             disableAllTouchEventsForDisabledDays={true}
-            // Replace default month and year title with custom one. the function receive a date as parameter.
             renderHeader={() => <View />}
-            // Enable the option to swipe between months. Default = false
             enableSwipeMonths={true}
-            // Marking types: 'dot', 'multi-dot', 'period', 'multi-period', 'custom'
             markingType={"custom"}
             markedDates={{
-              // Example: Mark today and a few other days
               [new Date().toISOString().split("T")[0]]: {
                 customStyles: {
                   container: {
@@ -268,87 +255,99 @@ const styles = StyleSheet.create({
   focusCard: {
     backgroundColor: "#000000", // Dark card background
     borderRadius: 25,
-    marginBottom: 20,
+    marginBottom: 10,
     padding: 40, // Increased padding for better look
     alignItems: "center", // Center button if it's not full width
   },
   focusCardText: {
-    color: "#ffffff", // White text on dark card
-    fontFamily: "Gabarito-ExtraBold",
-    fontSize: 32,
+    fontFamily: "Gabarito-Bold",
+    fontSize: 24,
+    color: "#ffffff", // Light text
+    marginBottom: 10,
     textAlign: "center",
   },
   focusCardText2: {
-    color: "#ffffff", // White text on dark card
     fontFamily: "Gabarito-Regular",
+    fontSize: 16,
+    color: "#e0e0e0", // Lighter text for subtitle
+    marginBottom: 30,
     textAlign: "center",
-    paddingTop: 10,
   },
   focusCardButton: {
-    backgroundColor: "#ffffff",
+    backgroundColor: "#ffffff", // Example button color
     borderRadius: 25,
-    marginTop: 30,
-    borderColor: "#ffffff",
+    paddingVertical: 5,
+    paddingHorizontal: 20,
+    alignSelf: "center", // Center button
   },
   focusCardButtonText: {
-    fontFamily: "Gabarito-Bold",
     color: "#000000",
+    fontFamily: "Gabarito-Bold",
+    fontSize: 16,
     textAlign: "center",
   },
   sectionTitle: {
     fontFamily: "Gabarito-Bold",
-    marginBottom: 15,
     fontSize: 24,
-    color: "#222b45",
-    marginTop: 20, // Added marginTop for spacing
+    color: "#333333", // Darker text for section titles
+    flex: 1, // Allow title to take available space
+  },
+  sectionHeaderContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  addButton: {
+    marginLeft: 10, // Add some space between text and button
+    padding: 5, // Make it easier to press
   },
   goalCard: {
     marginBottom: 15,
-    borderRadius: 25,
-    backgroundColor: "#FFFFFF", // White cards for goals
-    borderColor: "white",
+    backgroundColor: "#ffffff", // White background for cards
+    borderRadius: 15,
+    borderColor: "#ffffff",
   },
   goalCardContent: {
     flexDirection: "row",
     alignItems: "center",
+    padding: 15,
   },
   goalTextContainer: {
     marginLeft: 15,
     flex: 1, // Allow text to take remaining space
   },
   goalCardTitle: {
-    fontFamily: "Gabarito-ExtraBold",
-    color: "#000000",
+    fontFamily: "Gabarito-Medium",
     fontSize: 18,
+    color: "#000000",
   },
   goalCardDescription: {
     fontFamily: "Gabarito-Regular",
-    color: "#555",
-    marginTop: 4,
     fontSize: 14,
+    color: "#666666",
+    marginTop: 4,
+  },
+  fab: {
+    position: "absolute",
+    margin: 24,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "#000000", // FAB background color
+    borderRadius: 30, // Make it circular
   },
   emptyStateText: {
     fontFamily: "Gabarito-Regular",
-    color: "#888",
+    fontSize: 16,
     textAlign: "center",
-    marginTop: 10,
-    marginBottom: 20,
-  },
-  completedGoalItem: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 8,
-    marginBottom: 8,
-    borderColor: "#e4e9f2",
-    borderWidth: 1,
-  },
-  completedGoalText: {
-    fontFamily: "Gabarito-Regular",
-    color: "#333",
+    color: "#777",
+    marginTop: 20,
   },
   calendarContainer: {
-    backgroundColor: "#ffffff",
     borderRadius: 15,
-    padding: 10,
+    overflow: "hidden", // Ensures the border radius is applied to the Calendar
     marginBottom: 20,
+    marginTop: 15,
   },
 });
