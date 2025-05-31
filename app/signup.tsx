@@ -2,7 +2,8 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { Button, Input, Layout, Text } from "@ui-kitten/components";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { Alert, Pressable, StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
+import Toast from "react-native-toast-message";
 import { signUpWithEmailPassword } from "../services/authService";
 
 export default function SignUpScreen() {
@@ -14,11 +15,19 @@ export default function SignUpScreen() {
 
   const handleSignUp = async () => {
     if (password !== confirmPassword) {
-      Alert.alert("Error", "Passwords do not match.");
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Passwords do not match.",
+      });
       return;
     }
     if (!email || !password) {
-      Alert.alert("Error", "Email and password cannot be empty.");
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Email and password cannot be empty.",
+      });
       return;
     }
 
@@ -27,20 +36,26 @@ export default function SignUpScreen() {
       const userCredential = await signUpWithEmailPassword(email, password);
       if (userCredential) {
         console.log("Sign up successful! User UID:", userCredential.user.uid);
+        Toast.show({
+          type: "success",
+          text1: "Success",
+          text2: "Account created successfully!",
+        });
         router.replace("/home");
       }
     } catch (err: any) {
       console.error("Sign up failed:", err.message);
+      let errorMessage = "An unexpected error occurred. Please try again.";
       if (err.message === "email-already-in-use") {
-        Alert.alert("Sign Up Failed", "This email address is already in use.");
+        errorMessage = "This email address is already in use.";
       } else if (err.message === "invalid-email") {
-        Alert.alert("Sign Up Failed", "The email address is not valid.");
-      } else {
-        Alert.alert(
-          "Sign Up Failed",
-          "An unexpected error occurred. Please try again."
-        );
+        errorMessage = "The email address is not valid.";
       }
+      Toast.show({
+        type: "error",
+        text1: "Sign Up Failed",
+        text2: errorMessage,
+      });
     } finally {
       setLoading(false);
     }

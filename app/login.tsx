@@ -1,17 +1,53 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Button, Input, Layout, Text } from "@ui-kitten/components";
 import { useRouter } from "expo-router";
-import React from "react";
+import React, { useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
+import Toast from "react-native-toast-message";
+import { signInWithEmailPassword } from "../services/authService";
 
 export default function LoginScreen() {
   const router = useRouter();
-  const [email, setEmail] = React.useState("");
-  const [password, setPassword] = React.useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
-    // TODO: Implement login logic
-    console.log("Login attempt with:", email, password);
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Email and password cannot be empty.",
+      });
+      return;
+    }
+    setLoading(true);
+    try {
+      const userCredential = await signInWithEmailPassword(email, password);
+      if (userCredential) {
+        Toast.show({
+          type: "success",
+          text1: "Login Successful",
+          text2: "Welcome back!",
+        });
+        router.replace("/home");
+      }
+    } catch (error: any) {
+      console.error("Login failed:", error.message);
+      let errorMessage = "An unexpected error occurred. Please try again.";
+      if (error.message === "invalid-credentials") {
+        errorMessage = "Invalid email or password. Please try again.";
+      } else if (error.message === "invalid-email") {
+        errorMessage = "The email address format is not valid.";
+      }
+      Toast.show({
+        type: "error",
+        text1: "Login Failed",
+        text2: errorMessage,
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const navigateToSignUp = () => {
@@ -51,6 +87,7 @@ export default function LoginScreen() {
           autoCapitalize="none"
           style={styles.input}
           textStyle={styles.inputText}
+          disabled={loading}
         />
         <Input
           placeholder="Password"
@@ -59,13 +96,27 @@ export default function LoginScreen() {
           secureTextEntry
           style={styles.input}
           textStyle={styles.inputText}
+          disabled={loading}
         />
-        <Button size="giant" style={styles.loginButton} onPress={handleLogin}>
-          <Text style={styles.loginButtonText}>log in</Text>
+        <Button
+          size="giant"
+          style={styles.loginButton}
+          onPress={handleLogin}
+          disabled={loading}
+        >
+          {loading ? (
+            <Text style={styles.loginButtonText}>Logging In...</Text>
+          ) : (
+            <Text style={styles.loginButtonText}>log in</Text>
+          )}
         </Button>
       </View>
 
-      <Pressable onPress={navigateToSignUp} style={styles.signUpContainer}>
+      <Pressable
+        onPress={navigateToSignUp}
+        style={styles.signUpContainer}
+        disabled={loading}
+      >
         <Text style={styles.signUpText}>
           Don't have an account? <Text style={styles.signUpLink}>Sign Up</Text>
         </Text>

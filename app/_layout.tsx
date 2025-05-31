@@ -8,7 +8,62 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect, useState } from "react";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import Toast from "react-native-toast-message";
 import InitializationScreen from "../components/InitializationScreen";
+
+// Key for AsyncStorage
+const LAST_LOGIN_DATE_KEY = "@App:lastLoginDate";
+const LOGIN_STREAK_COUNT_KEY = "@App:loginStreakCount";
+
+async function updateLoginStreak() {
+  try {
+    const today = new Date();
+    const todayString = today.toISOString().split("T")[0]; // YYYY-MM-DD format
+
+    const lastLoginDateString = await AsyncStorage.getItem(LAST_LOGIN_DATE_KEY);
+    const streakCountString = await AsyncStorage.getItem(
+      LOGIN_STREAK_COUNT_KEY
+    );
+    let currentStreak = streakCountString ? parseInt(streakCountString, 10) : 0;
+
+    if (lastLoginDateString) {
+      if (lastLoginDateString === todayString) {
+        // Already logged in today, streak already counted or initiated
+        console.log("Streak: Already logged in today.");
+        return; // No change to streak or last login date needed if it's already today
+      }
+
+      const lastLoginDate = new Date(lastLoginDateString);
+      // Calculate the difference in days
+      const differenceInTime = today.getTime() - lastLoginDate.getTime();
+      const differenceInDays = Math.floor(
+        differenceInTime / (1000 * 3600 * 24)
+      );
+
+      if (differenceInDays === 1) {
+        // Consecutive day
+        currentStreak++;
+        console.log("Streak: Consecutive day! New streak:", currentStreak);
+      } else {
+        // Gap in login, reset streak to 1 for today
+        currentStreak = 1;
+        console.log("Streak: Broken or first login in a while. Reset to 1.");
+      }
+    } else {
+      // First login (for this feature) or data cleared
+      currentStreak = 1;
+      console.log("Streak: First login recorded. Set to 1.");
+    }
+
+    await AsyncStorage.setItem(LAST_LOGIN_DATE_KEY, todayString);
+    await AsyncStorage.setItem(
+      LOGIN_STREAK_COUNT_KEY,
+      currentStreak.toString()
+    );
+  } catch (error) {
+    console.error("Failed to update login streak:", error);
+  }
+}
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -63,8 +118,12 @@ export default function RootLayout() {
   useEffect(() => {
     if (fontsLoaded && !authInitializing) {
       SplashScreen.hideAsync();
+      if (user) {
+        // Only update streak if a user is logged in
+        updateLoginStreak();
+      }
     }
-  }, [fontsLoaded, authInitializing]);
+  }, [fontsLoaded, authInitializing, user]);
 
   if (!fontsLoaded || authInitializing) {
     return <InitializationScreen />;
@@ -89,6 +148,7 @@ export default function RootLayout() {
             <Stack.Screen name="index" />
             <Stack.Screen name="home" />
           </Stack>
+          <Toast />
         </ApplicationProvider>
       </SafeAreaView>
     </SafeAreaProvider>
