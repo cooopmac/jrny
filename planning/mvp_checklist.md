@@ -26,11 +26,11 @@ This checklist outlines the steps to build the Minimum Viable Product (MVP) for 
 
 ## **Phase 2: User Authentication (Firebase)**
 
-- [ ] **2.1. Set up Firebase Project:**
-  - [ ] Create a new project on the Firebase console ([https://console.firebase.google.com/](https://console.firebase.google.com/)).
-  - [ ] Add your React Native app (iOS and Android) to the Firebase project.
-  - [ ] Download configuration files (google-services.json for Android, GoogleService-Info.plist for iOS) and place them in the correct project directories.
-  - [ ] Configure Firebase JS SDK in your React Native project (`@react-native-firebase/app` and other necessary modules like `@react-native-firebase/auth`).
+- [x] **2.1. Set up Firebase Project:**
+  - [x] Create a new project on the Firebase console ([https://console.firebase.google.com/](https://console.firebase.google.com/)).
+  - [x] Add your React Native app (iOS and Android) to the Firebase project.
+  - [x] Download configuration files (google-services.json for Android, GoogleService-Info.plist for iOS) and place them in the correct project directories.
+  - [x] Configure Firebase JS SDK in your React Native project (`@react-native-firebase/app` and other necessary modules like `@react-native-firebase/auth`).
 - [ ] **2.2. Implement Email/Password Authentication:**
   - [ ] Create SignUpScreen UI (email, password, confirm password fields).
   - [ ] Implement sign-up logic using `firebase.auth().createUserWithEmailAndPassword()`.

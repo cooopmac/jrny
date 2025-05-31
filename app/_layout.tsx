@@ -1,21 +1,29 @@
 import * as eva from "@eva-design/eva";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import type { FirebaseAuthTypes } from "@react-native-firebase/auth";
+import { getAuth, onAuthStateChanged } from "@react-native-firebase/auth";
 import { ApplicationProvider } from "@ui-kitten/components";
 import * as Font from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import InitializationScreen from "../components/InitializationScreen";
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const [fontsLoaded, setFontsLoaded] = React.useState(false);
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+  const [authInitializing, setAuthInitializing] = useState(true);
+  const [user, setUser] = useState<FirebaseAuthTypes.User | null>(null);
 
   useEffect(() => {
-    async function loadResourcesAndDataAsync() {
+    let authSubscriber: (() => void) | undefined = undefined;
+
+    async function initializeApp() {
+      // 1. Load fonts and set initialized flag
       try {
-        // Load fonts
         await Font.loadAsync({
           "Gabarito-SemiBold": require("../assets/fonts/Gabarito-SemiBold.ttf"),
           "Gabarito-Regular": require("../assets/fonts/Gabarito-Regular.ttf"),
@@ -24,27 +32,60 @@ export default function RootLayout() {
           "Gabarito-Bold": require("../assets/fonts/Gabarito-Bold.ttf"),
           "Gabarito-Black": require("../assets/fonts/Gabarito-Black.ttf"),
         });
-      } catch (e) {
-        // We might want to route here to an error screen
-        console.warn(e);
-      } finally {
+        // @ts-ignore: AsyncStorage might not be fully typed
+        await AsyncStorage.setItem("initialized", "true");
         setFontsLoaded(true);
-        SplashScreen.hideAsync();
+      } catch (e) {
+        console.warn("Error during font loading or AsyncStorage operation:", e);
+        setFontsLoaded(true); // Still set to true to allow app to proceed or show error
       }
+
+      // 2. Setup Firebase auth state listener
+      const authInstance = getAuth();
+      authSubscriber = onAuthStateChanged(authInstance, (firebaseUser) => {
+        setUser(firebaseUser);
+        if (authInitializing) {
+          setAuthInitializing(false);
+        }
+      });
     }
 
-    loadResourcesAndDataAsync();
-  }, []);
+    initializeApp();
 
-  if (!fontsLoaded) {
-    return null; // Render nothing until fonts are loaded
+    // Cleanup subscription on unmount
+    return () => {
+      if (authSubscriber) {
+        authSubscriber();
+      }
+    };
+  }, []); // Empty dependency array ensures this runs once on mount
+
+  useEffect(() => {
+    if (fontsLoaded && !authInitializing) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, authInitializing]);
+
+  if (!fontsLoaded || authInitializing) {
+    return <InitializationScreen />;
   }
+
+  // App is ready, user state is known
+  // console.log("User:", user); // You can log user here for debugging
 
   return (
     <SafeAreaProvider>
       <SafeAreaView style={{ flex: 1 }}>
         <ApplicationProvider {...eva} theme={eva.light}>
           <Stack screenOptions={{ headerShown: false }}>
+            {/* Example of conditional routing based on user */}
+            {/* {user ? (
+              <Stack.Screen name="home" />
+            ) : (
+              <Stack.Screen name="login" /> // Assuming you have a login screen
+            )}
+            <Stack.Screen name="index" redirect={!user} />  // or some other logic
+            <Stack.Screen name="home" redirect={!user} /> */}
             <Stack.Screen name="index" />
             <Stack.Screen name="home" />
           </Stack>

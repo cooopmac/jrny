@@ -1,18 +1,49 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Button, Input, Layout, Text } from "@ui-kitten/components";
 import { useRouter } from "expo-router";
-import React from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import React, { useState } from "react";
+import { Alert, Pressable, StyleSheet, View } from "react-native";
+import { signUpWithEmailPassword } from "../services/authService";
 
 export default function SignUpScreen() {
   const router = useRouter();
-  const [email, setEmail] = React.useState("");
-  const [password, setPassword] = React.useState("");
-  const [confirmPassword, setConfirmPassword] = React.useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSignUp = () => {
-    // TODO: Implement sign-up logic
-    console.log("Sign up attempt with:", email, password, confirmPassword);
+  const handleSignUp = async () => {
+    if (password !== confirmPassword) {
+      Alert.alert("Error", "Passwords do not match.");
+      return;
+    }
+    if (!email || !password) {
+      Alert.alert("Error", "Email and password cannot be empty.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const userCredential = await signUpWithEmailPassword(email, password);
+      if (userCredential) {
+        console.log("Sign up successful! User UID:", userCredential.user.uid);
+        router.replace("/home");
+      }
+    } catch (err: any) {
+      console.error("Sign up failed:", err.message);
+      if (err.message === "email-already-in-use") {
+        Alert.alert("Sign Up Failed", "This email address is already in use.");
+      } else if (err.message === "invalid-email") {
+        Alert.alert("Sign Up Failed", "The email address is not valid.");
+      } else {
+        Alert.alert(
+          "Sign Up Failed",
+          "An unexpected error occurred. Please try again."
+        );
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const navigateToLogin = () => {
@@ -68,13 +99,27 @@ export default function SignUpScreen() {
           secureTextEntry
           style={styles.input}
           textStyle={styles.inputText}
+          disabled={loading}
         />
-        <Button size="giant" style={styles.signUpButton} onPress={handleSignUp}>
-          <Text style={styles.signUpButtonText}>sign up</Text>
+        <Button
+          size="giant"
+          style={styles.signUpButton}
+          onPress={handleSignUp}
+          disabled={loading}
+        >
+          {loading ? (
+            <Text style={styles.signUpButtonText}>Signing Up...</Text>
+          ) : (
+            <Text style={styles.signUpButtonText}>sign up</Text>
+          )}
         </Button>
       </View>
 
-      <Pressable onPress={navigateToLogin} style={styles.loginContainer}>
+      <Pressable
+        onPress={navigateToLogin}
+        style={styles.loginContainer}
+        disabled={loading}
+      >
         <Text style={styles.loginText}>
           Already have an account? <Text style={styles.loginLink}>Log In</Text>
         </Text>
