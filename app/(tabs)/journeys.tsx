@@ -1,36 +1,37 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { getAuth } from "@react-native-firebase/auth";
-import firestore from "@react-native-firebase/firestore";
+// import { getAuth } from "@react-native-firebase/auth"; // Removed
+// import firestore from "@react-native-firebase/firestore"; // Removed
 import { Card, Layout } from "@ui-kitten/components";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
+  ActivityIndicator, // Keep Alert for potential local errors
   FlatList,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { fetchJourneys, Journey } from "../services/journeyService"; // Import the service
 
 // Key for AsyncStorage (must match the one in _layout.tsx and home.tsx)
 const LOGIN_STREAK_COUNT_KEY = "@App:loginStreakCount";
 
-// Define Journey type/interface
-interface Journey {
-  id: string; // Firestore document ID
-  title: string;
-  status: "Planned" | "Active" | "Completed";
-  progress?: number;
-  userId: string;
-  createdAt: any; // Firestore Timestamp
-  updatedAt: any; // Firestore Timestamp
-  lengthOfTime?: string;
-  priority?: "Low" | "Medium" | "High";
-  endDate?: any; // Firestore Timestamp or Date object
-}
+// Define Journey type/interface - This is now in journeyService.ts, but can be kept here if preferred for this screen's specific use or extended.
+// For simplicity, assuming Journey from service is sufficient.
+// interface Journey {
+//   id: string; // Firestore document ID
+//   title: string;
+//   status: "Planned" | "Active" | "Completed";
+//   progress?: number;
+//   userId: string;
+//   createdAt: any; // Firestore Timestamp
+//   updatedAt: any; // Firestore Timestamp
+//   lengthOfTime?: string;
+//   priority?: "Low" | "Medium" | "High";
+//   endDate?: any; // Firestore Timestamp or Date object
+// }
 
 export default function JourneysScreen() {
   const router = useRouter();
@@ -56,35 +57,24 @@ export default function JourneysScreen() {
   }, []);
 
   useEffect(() => {
-    const auth = getAuth();
-    const user = auth.currentUser;
+    setLoading(true); // Ensure loading is true at the start of fetch
+    const unsubscribe = fetchJourneys(
+      (fetchedJourneys) => {
+        setJourneys(fetchedJourneys);
+        setLoading(false);
+      },
+      (error) => {
+        // Alert.alert("Error", "Could not fetch journeys."); // Alert is already handled in service
+        console.error("Error in JourneysScreen: ", error.message); // Log specific error message
+        setLoading(false);
+      }
+    );
 
-    if (!user) {
-      setLoading(false);
-      return;
-    }
-
-    const unsubscribe = firestore()
-      .collection("journeys")
-      .where("userId", "==", user.uid)
-      .orderBy("createdAt", "desc")
-      .onSnapshot(
-        (querySnapshot) => {
-          const fetchedJourneys: Journey[] = [];
-          querySnapshot.forEach((doc) => {
-            fetchedJourneys.push({ id: doc.id, ...doc.data() } as Journey);
-          });
-          setJourneys(fetchedJourneys);
-          setLoading(false);
-        },
-        (error) => {
-          console.error("Error fetching journeys: ", error);
-          Alert.alert("Error", "Could not fetch journeys.");
-          setLoading(false);
-        }
-      );
-
-    return () => unsubscribe();
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, []);
 
   const handleCreateNewJourney = () => {

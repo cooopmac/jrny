@@ -3,31 +3,19 @@ import AsyncStorage from "@react-native-async-storage/async-storage"; // Import 
 import { Card, Layout, Text } from "@ui-kitten/components";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native"; // Added ActivityIndicator
 import { Calendar } from "react-native-calendars"; // Import Calendar
 import CircularProgress from "react-native-circular-progress-indicator";
+import { fetchJourneys, Journey } from "../services/journeyService"; // Corrected import path
 
 // Key for AsyncStorage (must match the one in _layout.tsx)
 const LOGIN_STREAK_COUNT_KEY = "@App:loginStreakCount";
-
-// Mock data for goals
-const mockActiveGoals = [
-  {
-    id: "1",
-    title: "Learn TypeScript",
-    description: "Master the fundamentals and advanced concepts.",
-  },
-  {
-    id: "2",
-    title: "Run a Marathon",
-    description: "Complete a full 26.2-mile marathon.",
-  },
-  {
-    id: "3",
-    title: "Write a Novel",
-    description: "Draft and edit a 50,000-word novel.",
-  },
-];
 
 const getDate = () => {
   const days = [
@@ -48,6 +36,8 @@ const getDate = () => {
 export default function HomeScreen() {
   const router = useRouter();
   const [loginStreak, setLoginStreak] = useState(0); // State for login streak
+  const [activeJourneys, setActiveJourneys] = useState<Journey[]>([]); // State for active journeys
+  const [loadingJourneys, setLoadingJourneys] = useState(true); // State for loading journeys
 
   useEffect(() => {
     const fetchLoginStreak = async () => {
@@ -66,19 +56,48 @@ export default function HomeScreen() {
     fetchLoginStreak();
   }, []); // Empty dependency array: run once on mount
 
+  // Effect to fetch journeys
+  useEffect(() => {
+    setLoadingJourneys(true);
+    const unsubscribe = fetchJourneys(
+      (journeys: Journey[]) => {
+        // Explicitly type journeys
+        setActiveJourneys(
+          journeys.filter(
+            (journey) =>
+              journey.status === "Active" || journey.status === "Planned"
+          )
+        );
+        setLoadingJourneys(false);
+      },
+      (error: Error) => {
+        // Explicitly type error
+        console.error("Failed to fetch journeys for home screen:", error);
+        setLoadingJourneys(false);
+        // Optionally, show an alert or a message to the user
+      }
+    );
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, []);
+
   const renderGoalItem = ({
     item,
   }: {
-    item: { id: string; title: string; description?: string };
+    item: Journey; // Changed to Journey type
   }) => (
     <Card
       key={item.id}
       style={styles.goalCard}
-      onPress={() => console.log("Navigate to goal:", item.id)}
+      onPress={() => console.log("Navigate to journey:", item.id)} // Updated log message
     >
       <View style={styles.goalCardContent}>
         <CircularProgress
-          value={58}
+          value={item.progress || 0} // Use journey progress, default to 0
           radius={25}
           valueSuffix={"%"}
           activeStrokeWidth={5}
@@ -86,9 +105,7 @@ export default function HomeScreen() {
         />
         <View style={styles.goalTextContainer}>
           <Text style={styles.goalCardTitle}>{item.title.toLowerCase()}</Text>
-          {item.description && (
-            <Text style={styles.goalCardDescription}>{item.description}</Text>
-          )}
+          <Text style={styles.goalCardDescription}>{item.lengthOfTime}</Text>
         </View>
       </View>
     </Card>
@@ -115,7 +132,7 @@ export default function HomeScreen() {
           <View>
             <Text style={styles.focusCardText}>create your goals.</Text>
             <Text style={styles.focusCardText2}>
-              {mockActiveGoals.length > 0
+              {activeJourneys.length > 0 // Use activeJourneys.length
                 ? `get a full guide to complete your journey.`
                 : "you got this!"}
             </Text>
@@ -136,15 +153,21 @@ export default function HomeScreen() {
             <Ionicons name="add-circle-outline" size={28} color="#333333" />
           </TouchableOpacity>
         </View>
-        {mockActiveGoals.length > 0 ? (
-          mockActiveGoals.map((goal) => renderGoalItem({ item: goal }))
+        {loadingJourneys ? (
+          <ActivityIndicator color="#007AFF" style={styles.loadingIndicator} />
+        ) : activeJourneys.length > 0 ? (
+          activeJourneys.map((journey: Journey) =>
+            renderGoalItem({ item: journey })
+          ) // Explicitly type journey here if needed, though often inferred
         ) : (
           <Text style={styles.emptyStateText}>
-            No active goals yet. Tap the '+' to add one!
+            No active journeys yet. Tap the '+' to add one!
           </Text>
         )}
 
-        <Text style={[styles.sectionTitle]}>activity calendar.</Text>
+        <Text style={[styles.sectionTitle, { marginTop: 15 }]}>
+          activity calendar.
+        </Text>
         <View style={styles.calendarContainer}>
           <Calendar
             current={new Date().toISOString().split("T")[0]}
@@ -312,7 +335,7 @@ const styles = StyleSheet.create({
   goalCardContent: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 15,
+    padding: 10, // Reduced padding from 15 to 10
   },
   goalTextContainer: {
     marginLeft: 15,
@@ -349,5 +372,9 @@ const styles = StyleSheet.create({
     overflow: "hidden", // Ensures the border radius is applied to the Calendar
     marginBottom: 20,
     marginTop: 15,
+  },
+  loadingIndicator: {
+    // Added style for loading indicator
+    marginTop: 20,
   },
 });
