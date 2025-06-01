@@ -116,12 +116,20 @@ export default function CreateJourneyScreen() {
           journeyTitle: newJourneyBase.title,
           journeyId: journeyRef.id,
         });
+        console.log(
+          "[create-journey] AI Response received:",
+          JSON.stringify(aiResponse, null, 2)
+        ); // Log AI response
 
         if (
           aiResponse &&
           aiResponse.aiGeneratedPlan &&
           aiResponse.aiGeneratedPlan.length > 0
         ) {
+          console.log(
+            "[create-journey] Attempting to save AI plan:",
+            JSON.stringify(aiResponse.aiGeneratedPlan, null, 2)
+          ); // Log plan to be saved
           await journeyRef.update({
             aiPlan: aiResponse.aiGeneratedPlan,
             updatedAt: serverTimestamp(),
@@ -133,9 +141,9 @@ export default function CreateJourneyScreen() {
           Alert.alert("Success", "Journey created and AI plan generated!");
         } else {
           console.log(
-            "AI did not generate a plan, or plan was empty for journey:",
-            journeyRef.id
-          );
+            "[create-journey] AI Response (or plan) was empty or missing:",
+            JSON.stringify(aiResponse, null, 2)
+          ); // Log if plan is missing
           Alert.alert(
             "Success",
             "Journey created! (AI plan was not generated or was empty)"

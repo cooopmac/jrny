@@ -23,6 +23,10 @@ export const getAIGoalBreakdown = async (
   try {
     const callFirebaseFunction = httpsCallable(functions, "getGoalBreakdown");
     const result = await callFirebaseFunction(data);
+    console.log(
+      "[aiService] Raw data from Firebase function:",
+      JSON.stringify(result.data, null, 2)
+    ); // Log the raw data
     return result.data as AIGoalBreakdownResponse;
   } catch (error) {
     console.error("Error calling Firebase function:", error);

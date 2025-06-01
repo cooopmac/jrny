@@ -149,7 +149,7 @@ export default function HomeScreen() {
             <Button
               style={styles.focusCardButton}
               status="basic"
-              onPress={handleCreateNewJourney}
+              onPress={() => router.push("/journeys")}
             >
               <Text style={styles.focusCardButtonText}>
                 view your journeys.
