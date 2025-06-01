@@ -13,20 +13,17 @@ import {
 } from "@ui-kitten/components";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { Alert, ScrollView, StyleSheet } from "react-native";
+import { ActivityIndicator, Alert, ScrollView, StyleSheet } from "react-native";
+import { getAIGoalBreakdown } from "../services/aiService";
+import { Journey } from "../services/journeyService";
 
-// Define Journey interface (can be shared if in a types file)
-interface JourneyData {
+// Define JourneyData interface (local to this file for form handling)
+interface JourneyFormData {
   title: string;
-  // description?: string;
-  lengthOfTime?: string; // e.g., "30 days", "2 weeks"
+  description?: string;
+  lengthOfTime?: string;
   priority?: "Low" | "Medium" | "High";
   endDate?: Date;
-  userId: string;
-  status: "Planned" | "Active" | "Completed";
-  progress: number;
-  createdAt: any; // Firestore Timestamp
-  updatedAt: any; // Firestore Timestamp
 }
 
 const priorityOptions = ["Low", "Medium", "High"];
@@ -34,11 +31,13 @@ const priorityOptions = ["Low", "Medium", "High"];
 export default function CreateJourneyScreen() {
   const router = useRouter();
   const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [lengthOfTime, setLengthOfTime] = useState("");
   const [selectedPriorityIndex, setSelectedPriorityIndex] = useState<
     IndexPath | undefined
   >(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleSaveJourney = async () => {
     const auth = getAuth();
@@ -54,37 +53,108 @@ export default function CreateJourneyScreen() {
       return;
     }
 
-    const journeyDetails: Omit<
-      JourneyData,
-      "id" | "createdAt" | "updatedAt" | "userId" | "status" | "progress"
-    > &
-      Partial<Pick<JourneyData, "status" | "progress">> = {
+    setIsSaving(true);
+
+    const journeyFormDetails: JourneyFormData = {
       title: title.trim(),
+      description: description.trim() || undefined,
       lengthOfTime: lengthOfTime.trim() || undefined,
       priority: selectedPriorityIndex
         ? (priorityOptions[
             selectedPriorityIndex.row
-          ] as JourneyData["priority"])
+          ] as JourneyFormData["priority"])
         : undefined,
       endDate: endDate,
     };
 
-    const newJourneyData: Omit<JourneyData, "id"> = {
-      ...journeyDetails,
+    const newJourneyBase: Omit<
+      Journey,
+      "id" | "createdAt" | "updatedAt" | "aiPlan"
+    > = {
+      ...journeyFormDetails,
       userId: user.uid,
-      status: "Planned", // Default status
-      progress: 0, // Default progress
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
+      status: "Planned",
+      progress: 0,
     };
 
     try {
-      await firestore().collection("journeys").add(newJourneyData);
-      Alert.alert("Success", "Journey created successfully!");
-      router.back(); // Go back to the previous screen (JourneysScreen)
+      // Add basic journey data
+      const dataToSave: Partial<Journey> & {
+        createdAt: any;
+        updatedAt: any;
+        userId: string;
+        status: string;
+        progress: number;
+      } = {
+        ...newJourneyBase,
+        userId: user.uid, // Ensure userId is part of dataToSave from newJourneyBase or explicitly
+        status: "Planned", // Ensure status is part of dataToSave
+        progress: 0, // Ensure progress is part of dataToSave
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      };
+
+      // Remove undefined properties before saving to Firestore
+      Object.keys(dataToSave).forEach((key) => {
+        if (dataToSave[key as keyof typeof dataToSave] === undefined) {
+          delete dataToSave[key as keyof typeof dataToSave];
+        }
+      });
+
+      const journeyRef = await firestore()
+        .collection("journeys")
+        .add(dataToSave);
+
+      console.log("Basic journey added with ID: ", journeyRef.id);
+
+      try {
+        Alert.alert(
+          "AI Assistant",
+          "Generating an initial plan for your journey..."
+        );
+        const aiResponse = await getAIGoalBreakdown({
+          journeyTitle: newJourneyBase.title,
+          journeyId: journeyRef.id,
+        });
+
+        if (
+          aiResponse &&
+          aiResponse.aiGeneratedPlan &&
+          aiResponse.aiGeneratedPlan.length > 0
+        ) {
+          await journeyRef.update({
+            aiPlan: aiResponse.aiGeneratedPlan,
+            updatedAt: serverTimestamp(),
+          });
+          console.log(
+            "AI plan generated and saved for journey: ",
+            journeyRef.id
+          );
+          Alert.alert("Success", "Journey created and AI plan generated!");
+        } else {
+          console.log(
+            "AI did not generate a plan, or plan was empty for journey:",
+            journeyRef.id
+          );
+          Alert.alert(
+            "Success",
+            "Journey created! (AI plan was not generated or was empty)"
+          );
+        }
+      } catch (aiError) {
+        console.error("Error generating AI plan: ", aiError);
+        Alert.alert(
+          "Journey Created",
+          "Journey created, but there was an issue generating the AI plan. You can try generating it later."
+        );
+      }
+
+      router.back();
     } catch (error) {
       console.error("Error creating journey: ", error);
       Alert.alert("Error", "Could not create journey. Please try again.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -105,6 +175,16 @@ export default function CreateJourneyScreen() {
           value={title}
           onChangeText={setTitle}
           style={styles.input}
+          disabled={isSaving}
+        />
+
+        <Input
+          label="Description (Optional)"
+          placeholder="e.g., A brief overview"
+          value={description}
+          onChangeText={setDescription}
+          style={styles.input}
+          disabled={isSaving}
         />
 
         <Input
@@ -113,6 +193,7 @@ export default function CreateJourneyScreen() {
           value={lengthOfTime}
           onChangeText={setLengthOfTime}
           style={styles.input}
+          disabled={isSaving}
         />
 
         <Select
@@ -126,6 +207,7 @@ export default function CreateJourneyScreen() {
               : ""
           }
           style={styles.input}
+          disabled={isSaving}
         >
           {priorityOptions.map((p) => (
             <SelectItem title={p} key={p} />
@@ -139,15 +221,29 @@ export default function CreateJourneyScreen() {
           onSelect={(nextDate) => setEndDate(nextDate)}
           accessoryRight={CalendarIcon}
           style={styles.input}
+          disabled={isSaving}
         />
 
-        <Button onPress={handleSaveJourney} style={styles.saveButton}>
-          Save Journey
-        </Button>
+        {isSaving ? (
+          <ActivityIndicator
+            size="large"
+            color="#0000ff"
+            style={styles.saveButton}
+          />
+        ) : (
+          <Button
+            onPress={handleSaveJourney}
+            style={styles.saveButton}
+            disabled={isSaving}
+          >
+            Save Journey & Generate Plan
+          </Button>
+        )}
         <Button
           onPress={() => router.back()}
           appearance="ghost"
           style={styles.cancelButton}
+          disabled={isSaving}
         >
           Cancel
         </Button>

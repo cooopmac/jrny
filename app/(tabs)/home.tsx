@@ -1,6 +1,6 @@
 import Ionicons from "@expo/vector-icons/Ionicons"; // For FAB icon
 import AsyncStorage from "@react-native-async-storage/async-storage"; // Import AsyncStorage
-import { Card, Layout, Text } from "@ui-kitten/components";
+import { Button, Card, Layout, Text } from "@ui-kitten/components";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -12,7 +12,7 @@ import {
 } from "react-native"; // Added ActivityIndicator
 import { Calendar } from "react-native-calendars"; // Import Calendar
 import CircularProgress from "react-native-circular-progress-indicator";
-import { fetchJourneys, Journey } from "../services/journeyService"; // Corrected import path
+import { fetchJourneys, Journey } from "../../services/journeyService"; // Corrected import path
 
 // Key for AsyncStorage (must match the one in _layout.tsx)
 const LOGIN_STREAK_COUNT_KEY = "@App:loginStreakCount";
@@ -85,6 +85,10 @@ export default function HomeScreen() {
     };
   }, []);
 
+  const handleCreateNewJourney = () => {
+    router.push("/create-journey");
+  };
+
   const renderGoalItem = ({
     item,
   }: {
@@ -93,7 +97,13 @@ export default function HomeScreen() {
     <Card
       key={item.id}
       style={styles.goalCard}
-      onPress={() => console.log("Navigate to journey:", item.id)} // Updated log message
+      onPress={() => {
+        console.log("Navigate to journey:", item.id);
+        router.push({
+          pathname: "/journey/[id]",
+          params: { id: item.id },
+        }); // Navigate to detail screen using object syntax
+      }}
     >
       <View style={styles.goalCardContent}>
         <CircularProgress
@@ -136,18 +146,22 @@ export default function HomeScreen() {
                 ? `get a full guide to complete your journey.`
                 : "you got this!"}
             </Text>
-            <Card style={styles.focusCardButton}>
+            <Button
+              style={styles.focusCardButton}
+              status="basic"
+              onPress={handleCreateNewJourney}
+            >
               <Text style={styles.focusCardButtonText}>
                 view your journeys.
               </Text>
-            </Card>
+            </Button>
           </View>
         </Card>
 
         <View style={styles.sectionHeaderContainer}>
           <Text style={styles.sectionTitle}>active journies.</Text>
           <TouchableOpacity
-            onPress={() => console.log("Add button pressed")}
+            onPress={handleCreateNewJourney}
             style={styles.addButton}
           >
             <Ionicons name="add-circle-outline" size={28} color="#333333" />

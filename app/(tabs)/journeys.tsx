@@ -13,25 +13,10 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { fetchJourneys, Journey } from "../services/journeyService"; // Import the service
+import { fetchJourneys, Journey } from "../../services/journeyService"; // Import the service
 
 // Key for AsyncStorage (must match the one in _layout.tsx and home.tsx)
 const LOGIN_STREAK_COUNT_KEY = "@App:loginStreakCount";
-
-// Define Journey type/interface - This is now in journeyService.ts, but can be kept here if preferred for this screen's specific use or extended.
-// For simplicity, assuming Journey from service is sufficient.
-// interface Journey {
-//   id: string; // Firestore document ID
-//   title: string;
-//   status: "Planned" | "Active" | "Completed";
-//   progress?: number;
-//   userId: string;
-//   createdAt: any; // Firestore Timestamp
-//   updatedAt: any; // Firestore Timestamp
-//   lengthOfTime?: string;
-//   priority?: "Low" | "Medium" | "High";
-//   endDate?: any; // Firestore Timestamp or Date object
-// }
 
 export default function JourneysScreen() {
   const router = useRouter();
@@ -86,6 +71,10 @@ export default function JourneysScreen() {
       style={styles.journeyCard}
       onPress={() => {
         console.log("View Journey:", item.id);
+        router.push({
+          pathname: "/journey/[id]",
+          params: { id: item.id },
+        });
       }}
     >
       <View style={styles.journeyCardHeader}>

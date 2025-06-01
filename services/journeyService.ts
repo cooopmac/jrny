@@ -14,6 +14,7 @@ export interface Journey {
   lengthOfTime?: string;
   priority?: "Low" | "Medium" | "High";
   endDate?: any; // Firestore Timestamp or Date object
+  aiPlan?: string[]; // For storing AI-generated plan steps
 }
 
 export const fetchJourneys = (
@@ -48,4 +49,22 @@ export const fetchJourneys = (
     );
 
   return unsubscribe; // Return the unsubscribe function for cleanup
+};
+
+export const fetchJourneyById = async (
+  journeyId: string
+): Promise<Journey | null> => {
+  try {
+    const doc = await firestore().collection("journeys").doc(journeyId).get();
+    if (Boolean(doc.exists)) {
+      return { id: doc.id, ...doc.data() } as Journey;
+    } else {
+      console.log("No such document!");
+      return null;
+    }
+  } catch (error) {
+    console.error("Error fetching journey by ID: ", error);
+    Alert.alert("Error", "Could not fetch journey details.");
+    throw error;
+  }
 };

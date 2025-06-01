@@ -8,6 +8,7 @@ import React, { useEffect, useState } from "react";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 import InitializationScreen from "../components/InitializationScreen";
+import "../services/firebaseInitService"; // Import for Firebase initialization (side effect)
 import { loadApplicationFonts } from "../services/fontService";
 import { updateLoginStreak } from "../services/streakService";
 
@@ -84,6 +85,7 @@ export default function RootLayout() {
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="index" />
             <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="+not-found" />
           </Stack>
           <Toast />
         </ApplicationProvider>
