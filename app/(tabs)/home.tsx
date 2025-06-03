@@ -1,6 +1,13 @@
 import Ionicons from "@expo/vector-icons/Ionicons"; // For FAB icon
 import AsyncStorage from "@react-native-async-storage/async-storage"; // Import AsyncStorage
-import { Button, Card, Layout, Text } from "@ui-kitten/components";
+import {
+  Button,
+  Card,
+  Layout,
+  MenuItem,
+  OverflowMenu,
+  Text,
+} from "@ui-kitten/components";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -12,7 +19,11 @@ import {
 } from "react-native"; // Added ActivityIndicator
 import { Calendar } from "react-native-calendars"; // Import Calendar
 import CircularProgress from "react-native-circular-progress-indicator";
-import { fetchJourneys, Journey } from "../../services/journeyService"; // Corrected import path
+import {
+  deleteJourney as deleteJourneyFromService,
+  fetchJourneys,
+  Journey,
+} from "../../services/journeyService"; // Corrected import path, Added deleteJourneyFromService
 
 // Key for AsyncStorage (must match the one in _layout.tsx)
 const LOGIN_STREAK_COUNT_KEY = "@App:loginStreakCount";
@@ -38,6 +49,9 @@ export default function HomeScreen() {
   const [loginStreak, setLoginStreak] = useState(0); // State for login streak
   const [activeJourneys, setActiveJourneys] = useState<Journey[]>([]); // State for active journeys
   const [loadingJourneys, setLoadingJourneys] = useState(true); // State for loading journeys
+  const [menuVisibleForJourney, setMenuVisibleForJourney] = useState<
+    string | null
+  >(null); // State for active menu
 
   useEffect(() => {
     const fetchLoginStreak = async () => {
@@ -89,37 +103,100 @@ export default function HomeScreen() {
     router.push("/create-journey");
   };
 
+  const handleDeleteJourney = async (journeyId: string) => {
+    console.log(`[home] Attempting to delete journey: ${journeyId}`);
+    const journeyToDelete = activeJourneys.find((j) => j.id === journeyId);
+    setMenuVisibleForJourney(null); // Close menu first
+    if (journeyToDelete) {
+      try {
+        await deleteJourneyFromService(journeyId);
+        console.log(
+          `[home] Journey ${journeyId} (${journeyToDelete.title}) deletion initiated.`
+        );
+        // Firestore listener in fetchJourneys should update the UI.
+      } catch (error) {
+        console.error(
+          `[home] Error initiating deletion for journey ${journeyId}:`,
+          error
+        );
+      }
+    } else {
+      console.warn(
+        `[home] Journey with id ${journeyId} not found for deletion.`
+      );
+    }
+  };
+
   const renderGoalItem = ({
     item,
   }: {
     item: Journey; // Changed to Journey type
-  }) => (
-    <Card
-      key={item.id}
-      style={styles.goalCard}
-      onPress={() => {
-        console.log("Navigate to journey:", item.id);
-        router.push({
-          pathname: "/journey/[id]",
-          params: { id: item.id },
-        }); // Navigate to detail screen using object syntax
-      }}
-    >
-      <View style={styles.goalCardContent}>
-        <CircularProgress
-          value={item.progress || 0} // Use journey progress, default to 0
-          radius={25}
-          valueSuffix={"%"}
-          activeStrokeWidth={5}
-          inActiveStrokeWidth={5}
-        />
-        <View style={styles.goalTextContainer}>
-          <Text style={styles.goalCardTitle}>{item.title.toLowerCase()}</Text>
-          <Text style={styles.goalCardDescription}>{item.lengthOfTime}</Text>
+  }) => {
+    const renderMenuAnchor = () => (
+      <TouchableOpacity
+        style={styles.menuAnchorButton}
+        onPress={() => setMenuVisibleForJourney(item.id)}
+      >
+        <Ionicons name="ellipsis-vertical" size={24} color="#333333" />
+      </TouchableOpacity>
+    );
+
+    console.log(
+      `[home] Rendering Journey Card: Title: "${item.title}", Description: "${
+        item.description
+      }" (Type: ${typeof item.description})`
+    ); // Added for debugging
+
+    const DeleteIcon = (props: any) => (
+      <Ionicons name="trash-outline" size={20} color={props.style.tintColor} />
+    );
+
+    return (
+      <Card key={item.id} style={styles.goalCard}>
+        <View style={styles.goalCardContent}>
+          <TouchableOpacity
+            style={{ flexDirection: "row", alignItems: "center", flex: 1 }}
+            onPress={() => {
+              console.log("Navigate to journey:", item.id);
+              router.push({
+                pathname: "/journey/[id]",
+                params: { id: item.id },
+              });
+            }}
+          >
+            <CircularProgress
+              value={item.progress || 0} // Use journey progress, default to 0
+              radius={25}
+              valueSuffix={"%"}
+              activeStrokeWidth={5}
+              inActiveStrokeWidth={5}
+            />
+            <View style={styles.goalTextContainer}>
+              <Text style={styles.goalCardTitle}>
+                {item.title.toLowerCase()}
+              </Text>
+              <Text style={styles.goalCardDescription}>
+                {item.description || ""}
+              </Text>
+            </View>
+          </TouchableOpacity>
+
+          <OverflowMenu
+            visible={menuVisibleForJourney === item.id}
+            anchor={renderMenuAnchor}
+            onBackdropPress={() => setMenuVisibleForJourney(null)}
+            backdropStyle={styles.overflowMenuBackdrop}
+          >
+            <MenuItem
+              title="Delete"
+              accessoryLeft={DeleteIcon}
+              onPress={() => handleDeleteJourney(item.id)}
+            />
+          </OverflowMenu>
         </View>
-      </View>
-    </Card>
-  );
+      </Card>
+    );
+  };
 
   return (
     <Layout style={styles.container}>
@@ -349,7 +426,8 @@ const styles = StyleSheet.create({
   goalCardContent: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 10, // Reduced padding from 15 to 10
+    justifyContent: "space-between", // Added to push menu to the end
+    padding: 10,
   },
   goalTextContainer: {
     marginLeft: 15,
@@ -390,5 +468,11 @@ const styles = StyleSheet.create({
   loadingIndicator: {
     // Added style for loading indicator
     marginTop: 20,
+  },
+  menuAnchorButton: {
+    padding: 8, // Added padding for easier touch
+  },
+  overflowMenuBackdrop: {
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
 });

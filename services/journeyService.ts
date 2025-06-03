@@ -68,3 +68,22 @@ export const fetchJourneyById = async (
     throw error;
   }
 };
+
+export const deleteJourney = async (journeyId: string): Promise<void> => {
+  console.log(`[journeyService] Deleting journey with ID: ${journeyId}`);
+  try {
+    await firestore().collection("journeys").doc(journeyId).delete();
+    console.log(
+      `[journeyService] Journey ${journeyId} deleted successfully from Firestore.`
+    );
+    // Consider if any local cache or state needs to be updated upon deletion,
+    // though typically the listener in fetchJourneys would handle UI updates.
+  } catch (error: any) {
+    console.error(
+      `[journeyService] Error deleting journey ${journeyId}:`,
+      error
+    );
+    Alert.alert("Error", `Could not delete journey. ${error.message}`);
+    throw error; // Re-throw the error to be caught by the caller if needed
+  }
+};

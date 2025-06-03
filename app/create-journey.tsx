@@ -13,7 +13,7 @@ import {
 } from "@ui-kitten/components";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { ActivityIndicator, Alert, ScrollView, StyleSheet } from "react-native";
+import { ActivityIndicator, ScrollView, StyleSheet } from "react-native";
 import { getAIGoalBreakdown } from "../services/aiService";
 import { Journey } from "../services/journeyService";
 
@@ -44,12 +44,16 @@ export default function CreateJourneyScreen() {
     const user = auth.currentUser;
 
     if (!user) {
-      Alert.alert("Error", "You must be logged in to create a journey.");
+      console.warn(
+        "[create-journey] User not logged in. Cannot create journey."
+      );
       return;
     }
 
     if (!title.trim()) {
-      Alert.alert("Error", "Please enter a title for your journey.");
+      console.warn(
+        "[create-journey] Journey title is missing. Cannot create journey."
+      );
       return;
     }
 
@@ -105,12 +109,15 @@ export default function CreateJourneyScreen() {
         .collection("journeys")
         .add(dataToSave);
 
-      console.log("Basic journey added with ID: ", journeyRef.id);
+      console.log(
+        "[create-journey] Basic journey added with ID: ",
+        journeyRef.id
+      );
 
       try {
-        Alert.alert(
-          "AI Assistant",
-          "Generating an initial plan for your journey..."
+        console.log(
+          "[create-journey] Attempting to generate AI plan for journey:",
+          journeyRef.id
         );
         const aiResponse = await getAIGoalBreakdown({
           journeyTitle: newJourneyBase.title,
@@ -135,32 +142,32 @@ export default function CreateJourneyScreen() {
             updatedAt: serverTimestamp(),
           });
           console.log(
-            "AI plan generated and saved for journey: ",
+            "[create-journey] AI plan generated and saved for journey: ",
             journeyRef.id
           );
-          Alert.alert("Success", "Journey created and AI plan generated!");
         } else {
           console.log(
-            "[create-journey] AI Response (or plan) was empty or missing:",
+            "[create-journey] AI Response (or plan) was empty or missing for journey ID " +
+              journeyRef.id +
+              ":",
             JSON.stringify(aiResponse, null, 2)
           ); // Log if plan is missing
-          Alert.alert(
-            "Success",
-            "Journey created! (AI plan was not generated or was empty)"
-          );
         }
       } catch (aiError) {
-        console.error("Error generating AI plan: ", aiError);
-        Alert.alert(
-          "Journey Created",
-          "Journey created, but there was an issue generating the AI plan. You can try generating it later."
+        console.error(
+          "[create-journey] Error generating AI plan for journey ID " +
+            journeyRef.id +
+            ": ",
+          aiError
         );
       }
 
-      router.back();
+      router.push({ pathname: "/journey/[id]", params: { id: journeyRef.id } });
+      console.log(
+        `[create-journey] Navigating to new journey page: /journey/${journeyRef.id}`
+      );
     } catch (error) {
-      console.error("Error creating journey: ", error);
-      Alert.alert("Error", "Could not create journey. Please try again.");
+      console.error("[create-journey] Error creating journey: ", error);
     } finally {
       setIsSaving(false);
     }

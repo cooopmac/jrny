@@ -17,33 +17,30 @@ export async function updateLoginStreak() {
 
     let currentStreak = streakCountString ? parseInt(streakCountString, 10) : 0;
 
+    if (lastLoginDateString === todayString) {
+      console.log("Streak Service: Already logged in today. Streak unchanged.");
+      return;
+    }
+
+    // If there was a last login, check if it was yesterday
     if (lastLoginDateString) {
-      if (lastLoginDateString === todayString) {
-        console.log(
-          "Streak Service: Already logged in today. Streak unchanged."
-        );
-        return;
-      }
+      const yesterday = new Date(today);
+      yesterday.setDate(today.getDate() - 1);
+      const yesterdayString = yesterday.toISOString().split("T")[0];
 
-      const lastLoginDate = new Date(lastLoginDateString);
-      const differenceInTime = today.getTime() - lastLoginDate.getTime();
-      const differenceInDays = Math.floor(
-        differenceInTime / (1000 * 3600 * 24)
-      );
-
-      if (differenceInDays === 1) {
+      if (lastLoginDateString === yesterdayString) {
         currentStreak++;
         console.log(
           "Streak Service: Consecutive day! New streak:",
           currentStreak
         );
       } else {
+        // Not yesterday, so the streak is broken
         currentStreak = 1;
-        console.log(
-          "Streak Service: Streak broken or first login. Reset to 1."
-        );
+        console.log("Streak Service: Streak broken. Reset to 1.");
       }
     } else {
+      // No last login date means this is the first login
       currentStreak = 1;
       console.log("Streak Service: First login. Streak set to 1.");
     }
