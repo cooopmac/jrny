@@ -39,6 +39,7 @@
     "firebase": "^11.8.1",
     "jwt-decode": "^4.0.0",
     "lodash": "^4.17.21",
+    "openai": "^5.1.0",
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "react-native": "0.79.2",

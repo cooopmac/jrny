@@ -120,10 +120,15 @@ export default function CreateJourneyScreen() {
           "[create-journey] Attempting to generate AI plan for journey:",
           journeyRef.id
         );
-        const aiResponse = await getAIGoalBreakdown({
-          journeyTitle: newJourneyBase.title,
-          journeyId: journeyRef.id,
-        });
+        // Construct the data payload for the AI service
+        const aiRequestData = {
+          title: journeyFormDetails.title, // Corrected field name
+          description: journeyFormDetails.description,
+          priority: journeyFormDetails.priority,
+          lengthOfTime: journeyFormDetails.lengthOfTime,
+        };
+
+        const aiResponse = await getAIGoalBreakdown(aiRequestData);
         console.log(
           "[create-journey] AI Response received:",
           JSON.stringify(aiResponse, null, 2)

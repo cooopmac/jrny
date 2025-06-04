@@ -257,7 +257,7 @@ export default function HomeScreen() {
         </Card>
 
         <View style={styles.sectionHeaderContainer}>
-          <Text style={styles.sectionTitle}>active journies.</Text>
+          <Text style={styles.sectionTitle}>active journeys.</Text>
           <TouchableOpacity
             onPress={handleCreateNewJourney}
             style={styles.addButton}
