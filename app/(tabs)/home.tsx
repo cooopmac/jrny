@@ -12,11 +12,14 @@ import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Text as RNText,
   ScrollView,
+  StyleProp,
   StyleSheet,
+  TextStyle,
   TouchableOpacity,
   View,
-} from "react-native"; // Added ActivityIndicator
+} from "react-native"; // Added ActivityIndicator, RNText, StyleProp, TextStyle
 import { Calendar } from "react-native-calendars"; // Import Calendar
 import CircularProgress from "react-native-circular-progress-indicator";
 import {
@@ -202,7 +205,11 @@ export default function HomeScreen() {
             backdropStyle={styles.overflowMenuBackdrop}
           >
             <MenuItem
-              title="Delete"
+              title={(props: { style?: StyleProp<TextStyle> }) => (
+                <RNText style={[props.style, styles.menuItemText]}>
+                  delete.
+                </RNText>
+              )}
               accessoryLeft={DeleteIcon}
               onPress={() => handleDeleteJourney(item.id)}
             />
@@ -234,8 +241,8 @@ export default function HomeScreen() {
             <Text style={styles.focusCardText}>create your goals.</Text>
             <Text style={styles.focusCardText2}>
               {activeJourneys.length > 0 // Use activeJourneys.length
-                ? `get a full guide to complete your journey.`
-                : "you got this!"}
+                ? "you got this!"
+                : "get a full guide to complete your journey."}
             </Text>
             <Button
               style={styles.focusCardButton}
@@ -489,5 +496,9 @@ const styles = StyleSheet.create({
   },
   overflowMenuBackdrop: {
     backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  menuItemText: {
+    // Added new style for menu item text
+    fontFamily: "Gabarito-Bold",
   },
 });
