@@ -40,6 +40,16 @@ export default function CreateJourneyScreen() {
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSaveJourney = async () => {
+    setIsSaving(true);
+
+    if (!title.trim()) {
+      console.warn(
+        "[create-journey] Journey title is missing. Cannot create journey."
+      );
+      setIsSaving(false);
+      return;
+    }
+
     const auth = getAuth();
     const user = auth.currentUser;
 
@@ -47,17 +57,9 @@ export default function CreateJourneyScreen() {
       console.warn(
         "[create-journey] User not logged in. Cannot create journey."
       );
+      setIsSaving(false);
       return;
     }
-
-    if (!title.trim()) {
-      console.warn(
-        "[create-journey] Journey title is missing. Cannot create journey."
-      );
-      return;
-    }
-
-    setIsSaving(true);
 
     const journeyFormDetails: JourneyFormData = {
       title: title.trim(),
@@ -134,30 +136,57 @@ export default function CreateJourneyScreen() {
           JSON.stringify(aiResponse, null, 2)
         ); // Log AI response
 
-        if (
-          aiResponse &&
-          aiResponse.aiGeneratedPlan &&
-          aiResponse.aiGeneratedPlan.length > 0
-        ) {
-          console.log(
-            "[create-journey] Attempting to save AI plan:",
-            JSON.stringify(aiResponse.aiGeneratedPlan, null, 2)
-          ); // Log plan to be saved
-          await journeyRef.update({
-            aiGeneratedPlan: aiResponse.aiGeneratedPlan,
+        if (aiResponse) {
+          const updateData: {
+            updatedAt: any;
+            aiGeneratedPlan?: Array<{ text: string; completed: boolean }>;
+            dailyTasks?: string[];
+          } = {
             updatedAt: serverTimestamp(),
-          });
-          console.log(
-            "[create-journey] AI plan generated and saved for journey: ",
-            journeyRef.id
-          );
+          };
+
+          let dataWasUpdated = false;
+
+          if (
+            aiResponse.aiGeneratedPlan &&
+            aiResponse.aiGeneratedPlan.length > 0
+          ) {
+            updateData.aiGeneratedPlan = aiResponse.aiGeneratedPlan;
+            dataWasUpdated = true;
+            console.log(
+              "[create-journey] AI plan will be saved:",
+              JSON.stringify(aiResponse.aiGeneratedPlan, null, 2)
+            );
+          }
+
+          if (aiResponse.dailyTasks && aiResponse.dailyTasks.length > 0) {
+            updateData.dailyTasks = aiResponse.dailyTasks;
+            dataWasUpdated = true;
+            console.log(
+              "[create-journey] Daily tasks will be saved:",
+              JSON.stringify(aiResponse.dailyTasks, null, 2)
+            );
+          }
+
+          if (dataWasUpdated) {
+            await journeyRef.update(updateData);
+            console.log(
+              "[create-journey] AI data (plan and/or daily tasks) generated and saved for journey: ",
+              journeyRef.id
+            );
+          } else {
+            console.log(
+              "[create-journey] AI Response did not contain a plan or daily tasks for journey ID " +
+                journeyRef.id +
+                ":",
+              JSON.stringify(aiResponse, null, 2)
+            ); // Log if plan/tasks are missing
+          }
         } else {
           console.log(
-            "[create-journey] AI Response (or plan) was empty or missing for journey ID " +
-              journeyRef.id +
-              ":",
-            JSON.stringify(aiResponse, null, 2)
-          ); // Log if plan is missing
+            "[create-journey] No AI Response object received for journey ID " +
+              journeyRef.id
+          );
         }
       } catch (aiError) {
         console.error(

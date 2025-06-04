@@ -12,6 +12,7 @@ import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Modal,
   Text as RNText,
   ScrollView,
   StyleProp,
@@ -51,6 +52,10 @@ export default function HomeScreen() {
   const router = useRouter();
   const [loginStreak, setLoginStreak] = useState(0); // State for login streak
   const [activeJourneys, setActiveJourneys] = useState<Journey[]>([]); // State for active journeys
+  const [journeysForStories, setJourneysForStories] = useState<Journey[]>([]); // State for story bubbles
+  const [isDailyTaskModalVisible, setIsDailyTaskModalVisible] = useState(false);
+  const [selectedJourneyForModal, setSelectedJourneyForModal] =
+    useState<Journey | null>(null);
   const [loadingJourneys, setLoadingJourneys] = useState(true); // State for loading journeys
   const [menuVisibleForJourney, setMenuVisibleForJourney] = useState<
     string | null
@@ -78,9 +83,17 @@ export default function HomeScreen() {
     setLoadingJourneys(true);
     const unsubscribe = fetchJourneys(
       (journeys: Journey[]) => {
-        // Explicitly type journeys
         setActiveJourneys(
           journeys.filter((journey) => journey.status === "Active")
+        );
+        // Filter for stories: Active or Planned journeys with daily tasks
+        setJourneysForStories(
+          journeys.filter(
+            (j) =>
+              (j.status === "Active" || j.status === "Planned") &&
+              j.dailyTasks &&
+              j.dailyTasks.length > 0
+          )
         );
         setLoadingJourneys(false);
       },
@@ -219,6 +232,85 @@ export default function HomeScreen() {
     );
   };
 
+  const DailyTasksStorySection = () => {
+    if (journeysForStories.length === 0 || loadingJourneys) {
+      return null;
+    }
+    return (
+      <View style={styles.storiesOuterContainer}>
+        <Text style={styles.storiesSectionTitle}>daily focus.</Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.storiesScrollContent}
+        >
+          {journeysForStories.map((journey) => (
+            <TouchableOpacity
+              key={journey.id}
+              style={styles.storyItem}
+              onPress={() => {
+                setSelectedJourneyForModal(journey);
+                setIsDailyTaskModalVisible(true);
+              }}
+            >
+              <View style={styles.storyBubble}>
+                <Ionicons name="flash-outline" size={26} color="#FFF" />
+              </View>
+              <Text style={styles.storyTitleText} numberOfLines={1}>
+                {journey.title}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+    );
+  };
+
+  const DailyTasksModal = () => {
+    if (!selectedJourneyForModal) return null;
+
+    return (
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isDailyTaskModalVisible}
+        onRequestClose={() => setIsDailyTaskModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>
+              Daily Tasks for: {selectedJourneyForModal.title}
+            </Text>
+            {selectedJourneyForModal.dailyTasks?.length ? (
+              selectedJourneyForModal.dailyTasks.map((task, index) => (
+                <View key={index} style={styles.modalTaskItem}>
+                  <Ionicons
+                    name="ellipse-outline"
+                    size={18}
+                    color="#007AFF"
+                    style={styles.modalTaskIcon}
+                  />
+                  <Text style={styles.modalTaskText}>{task}</Text>
+                </View>
+              ))
+            ) : (
+              <Text style={styles.modalTaskText}>
+                No daily tasks specified for this journey.
+              </Text>
+            )}
+            <Button
+              onPress={() => setIsDailyTaskModalVisible(false)}
+              style={styles.modalCloseButton}
+              appearance="ghost"
+            >
+              Close
+            </Button>
+          </View>
+        </View>
+      </Modal>
+    );
+  };
+
   return (
     <Layout style={styles.container}>
       {/* Sticky Header Part */}
@@ -236,6 +328,9 @@ export default function HomeScreen() {
         style={styles.mainScroll}
         contentContainerStyle={styles.scrollContentContainer}
       >
+        {/* Daily Tasks Story Section */}
+        <DailyTasksStorySection />
+
         <Card style={styles.focusCard}>
           <View>
             <Text style={styles.focusCardText}>create your goals.</Text>
@@ -342,6 +437,7 @@ export default function HomeScreen() {
           />
         </View>
       </ScrollView>
+      <DailyTasksModal />
     </Layout>
   );
 }
@@ -500,5 +596,93 @@ const styles = StyleSheet.create({
   menuItemText: {
     // Added new style for menu item text
     fontFamily: "Gabarito-Bold",
+  },
+  // Styles for Daily Tasks Story Section
+  storiesOuterContainer: {
+    marginTop: 10,
+    marginBottom: 20, // Space below the stories section
+    paddingHorizontal: 10, // Match general padding
+  },
+  storiesSectionTitle: {
+    fontFamily: "Gabarito-Bold",
+    fontSize: 24,
+    color: "#333333",
+    marginBottom: 12,
+    // paddingHorizontal: 10, // Added padding
+  },
+  storiesScrollContent: {
+    paddingVertical: 5,
+    alignItems: "flex-start",
+  },
+  storyItem: {
+    alignItems: "center",
+    marginRight: 15,
+    width: 70, // Fixed width for story item
+  },
+  storyBubble: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "#007AFF", // Example color, can be dynamic or themed
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 6,
+    borderWidth: 2,
+    borderColor: "#E0E0E0",
+  },
+  storyTitleText: {
+    fontFamily: "Gabarito-Regular",
+    fontSize: 12,
+    color: "#333333",
+    textAlign: "center",
+  },
+
+  // Styles for Daily Tasks Modal
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+  },
+  modalContent: {
+    backgroundColor: "white",
+    padding: 25,
+    borderRadius: 20,
+    width: "90%",
+    maxHeight: "80%",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontFamily: "Gabarito-Bold",
+    fontSize: 20,
+    marginBottom: 20,
+    color: "#333",
+    textAlign: "center",
+  },
+  modalTaskItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
+  },
+  modalTaskIcon: {
+    marginRight: 15,
+  },
+  modalTaskText: {
+    fontFamily: "Gabarito-Regular",
+    fontSize: 16,
+    color: "#444",
+    flex: 1,
+  },
+  modalCloseButton: {
+    marginTop: 25,
   },
 });

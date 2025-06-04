@@ -13,7 +13,7 @@ interface JourneyData {
 // The API key will be loaded from Firebase Functions configuration
 let openai: OpenAI | null = null;
 try {
-  const apiKey = functions.config().openai?.key;
+  const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     console.error(
       "OpenAI API key not found in Firebase Functions config (using functions.config().openai.key). " +
@@ -29,10 +29,10 @@ try {
 export const getGoalBreakdown = functions.https.onCall(
   async (data: any, context: any) => {
     // Log the received data (it's directly in 'data', not 'data.data' for onCall)
-    console.log("Received journey data for AI plan:", data);
+    console.log("Received journey data for AI plan:", data.data.title);
 
     // Cast data to JourneyData for type safety within the function if desired, or use directly
-    const journeyDetails = data as JourneyData;
+    const journeyDetails = data.data as JourneyData;
 
     if (!openai) {
       console.error("OpenAI client is not initialized. Cannot generate plan.");
@@ -65,7 +65,19 @@ Goal Title: ${journeyDetails.title}`;
     }
     promptContent += `
 
-Return the plan as a JSON array of strings, where each string is a concise, actionable step. For example: ["First step description.", "Second step description."]. Do not include any other text or explanation outside of this JSON array.`;
+Additionally, provide 3 concise, actionable tasks that should be done daily to support this goal.
+
+Return the entire response as a single JSON object with two keys:
+1. "plan": An array of strings, where each string is a step in the overall action plan.
+2. "dailyTasks": An array of strings, where each string is one of the three daily tasks.
+
+Example:
+{
+  "plan": ["Research best bench press techniques.", "Find a spotter.", "Start with lighter weights."],
+  "dailyTasks": ["Do 50 push-ups.", "Stretch chest and shoulders.", "Eat a high-protein meal."]
+}
+
+Do not include any other text or explanation outside of this JSON object.`;
 
     try {
       console.log("Sending prompt to OpenAI:", promptContent);
@@ -81,38 +93,42 @@ Return the plan as a JSON array of strings, where each string is a concise, acti
       if (aiMessage) {
         try {
           // Attempt to parse the response as JSON
-          const parsedPlan = JSON.parse(aiMessage);
+          const parsedResponse = JSON.parse(aiMessage);
+
+          // Validate the structure of the parsed response
+          const plan = parsedResponse.plan;
+          const dailyTasks = parsedResponse.dailyTasks;
+
           if (
-            Array.isArray(parsedPlan) &&
-            parsedPlan.every((item) => typeof item === "string")
+            Array.isArray(plan) &&
+            plan.every((item) => typeof item === "string") &&
+            Array.isArray(dailyTasks) &&
+            dailyTasks.every((item) => typeof item === "string")
           ) {
-            console.log("Successfully parsed AI plan:", parsedPlan);
+            console.log("Successfully parsed AI plan and daily tasks:", {
+              plan,
+              dailyTasks,
+            });
             return {
-              message: "AI action plan generated successfully.",
-              receivedData: journeyDetails, // Echo back the received data
-              aiGeneratedPlan: parsedPlan,
+              message: "AI action plan and daily tasks generated successfully.",
+              receivedData: journeyDetails,
+              aiGeneratedPlan: plan,
+              dailyTasks: dailyTasks,
             };
           } else {
             console.warn(
-              "OpenAI response was not a valid JSON array of strings:",
+              "OpenAI response was not a valid JSON object with 'plan' and 'dailyTasks' arrays of strings:",
               aiMessage
             );
-            // Fallback: if it's not JSON, maybe it's a list we can try to split?
-            // This is less reliable.
-            const fallbackPlan = aiMessage
-              .split(/\n(?=\d+\.\s)/) // Split by lines starting with "1. ", "2. " etc.
-              .map((step) => step.replace(/^\d+\.\s/, "").trim()) // Remove numbering
-              .filter((step) => step.length > 0);
-
-            if (fallbackPlan.length > 0) {
-              console.log("Parsed AI plan using fallback:", fallbackPlan);
-              return {
-                message: "AI action plan generated (fallback parsing).",
-                receivedData: journeyDetails,
-                aiGeneratedPlan: fallbackPlan,
-              };
-            }
-            throw new Error("AI response format was not as expected.");
+            // Fallback if structure is not as expected but we got some message
+            // This fallback is very basic and might need improvement based on actual AI responses when it fails
+            return {
+              message:
+                "AI response format was not as expected. Raw response logged.",
+              aiGeneratedPlan: [aiMessage], // Return raw message as a single step plan
+              dailyTasks: [],
+              receivedData: journeyDetails,
+            };
           }
         } catch (parseError) {
           console.error(
@@ -120,35 +136,15 @@ Return the plan as a JSON array of strings, where each string is a concise, acti
             parseError
           );
           console.error("AI Message Content that failed parsing:", aiMessage);
-          // Even if parsing fails, return the raw message if it seems like a plan
-          // This is a basic fallback and should be improved if possible
-          const fallbackPlan = aiMessage
-            .split("\n")
-            .map((s) => s.trim())
-            .filter(
-              (s) =>
-                s.length > 0 &&
-                !s.toLowerCase().startsWith("sure") &&
-                !s.toLowerCase().startsWith("here is")
-            );
-
-          if (fallbackPlan.length > 0) {
-            console.warn(
-              "Returning plan parsed by basic newline split due to JSON parse error."
-            );
-            return {
-              message: "AI action plan generated (raw, parsing issues).",
-              receivedData: journeyDetails,
-              aiGeneratedPlan: fallbackPlan,
-            };
-          }
+          // Fallback for JSON parsing error
           return {
             message:
               "AI plan generated, but there was an issue parsing it. Raw response logged.",
             aiGeneratedPlan: [
               "Could not parse AI response. Check logs.",
               aiMessage,
-            ], // Return the raw message for debugging
+            ],
+            dailyTasks: [],
             receivedData: journeyDetails,
           };
         }
@@ -157,6 +153,7 @@ Return the plan as a JSON array of strings, where each string is a concise, acti
         return {
           message: "AI did not return a plan.",
           aiGeneratedPlan: [],
+          dailyTasks: [],
           receivedData: journeyDetails,
         };
       }
@@ -169,6 +166,7 @@ Return the plan as a JSON array of strings, where each string is a concise, acti
       return {
         message: `Error generating AI plan: ${errorMessage}`,
         aiGeneratedPlan: [],
+        dailyTasks: [], // Ensure dailyTasks is included in error returns
         receivedData: journeyDetails,
       };
     }

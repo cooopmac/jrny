@@ -16,6 +16,7 @@ export interface Journey {
   priority?: "Low" | "Medium" | "High";
   endDate?: any; // Firestore Timestamp or Date object
   aiGeneratedPlan?: Array<{ text: string; completed: boolean }>; // Updated structure
+  dailyTasks?: string[]; // Added for daily recurring tasks
 }
 
 export const fetchJourneys = (

@@ -20,6 +20,7 @@ export interface AIGoalBreakdownResponse {
   message: string; // General message from the function
   receivedData?: AIGoalBreakdownRequestData; // Echo back what was sent
   aiGeneratedPlan?: AIPlanStep[]; // This is what we want
+  dailyTasks?: string[]; // Added for daily tasks
   // If your Firebase function still returns string[], we'll convert it
   // or, ideally, update the Firebase function to return AIPlanStep[]
 }
@@ -80,6 +81,7 @@ export const getAIGoalBreakdown = async (
       message: responseData.message,
       receivedData: responseData.receivedData,
       aiGeneratedPlan: structuredPlan,
+      dailyTasks: responseData.dailyTasks, // Pass through daily tasks
     } as AIGoalBreakdownResponse;
   } catch (error) {
     console.error(

@@ -335,6 +335,28 @@ const JourneyDetailScreen = () => {
           )}
         </Card>
 
+        {/* Daily Tasks Section */}
+        {journey.dailyTasks && journey.dailyTasks.length > 0 && (
+          <Card style={styles.dailyTasksCard}>
+            <Text style={styles.cardTitle}>Daily Tasks</Text>
+            {journey.dailyTasks.map((task, index) => (
+              <View key={index} style={styles.dailyTaskItem}>
+                <Ionicons
+                  name="flash-outline"
+                  size={20}
+                  color="#FFC107"
+                  style={styles.dailyTaskIcon}
+                />
+                <Text style={styles.dailyTaskText}>{task}</Text>
+              </View>
+            ))}
+            {/* Add a small note if needed */}
+            <Text style={styles.dailyTaskFooter}>
+              These are suggestions to do each day to help you reach your goal.
+            </Text>
+          </Card>
+        )}
+
         {journey.aiGeneratedPlan && journey.aiGeneratedPlan.length > 0 ? (
           <Card style={styles.planCard}>
             <Text style={styles.planTitle}>Action Plan</Text>
@@ -552,6 +574,39 @@ const styles = StyleSheet.create({
     fontFamily: "Gabarito-Medium",
     fontSize: 16,
     color: "#777777",
+    textAlign: "center",
+  },
+  dailyTasksCard: {
+    marginBottom: 20,
+    borderRadius: 15,
+    paddingVertical: 10,
+  },
+  cardTitle: {
+    marginBottom: 10,
+    fontFamily: "Gabarito-Bold",
+    fontSize: 18,
+  },
+  dailyTaskItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
+  },
+  dailyTaskIcon: {
+    marginRight: 12,
+  },
+  dailyTaskText: {
+    fontFamily: "Gabarito-Regular",
+    fontSize: 16,
+    flex: 1,
+    color: "#333",
+  },
+  dailyTaskFooter: {
+    marginTop: 10,
+    fontFamily: "Gabarito-Regular",
+    fontSize: 12,
+    color: "#777",
     textAlign: "center",
   },
 });
