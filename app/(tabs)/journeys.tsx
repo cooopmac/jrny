@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import CircularProgress from "react-native-circular-progress-indicator"; // Added
 import { fetchJourneys, Journey } from "../../services/journeyService"; // Import the service
 
 // Key for AsyncStorage (must match the one in _layout.tsx and home.tsx)
@@ -77,9 +78,65 @@ export default function JourneysScreen() {
         });
       }}
     >
-      <View style={styles.journeyCardHeader}>
-        <Text style={styles.journeyTitle}>{item.title}</Text>
-        <Text style={styles.journeyStatus}>{item.status}</Text>
+      <View style={styles.journeyCardContent}>
+        <CircularProgress
+          value={item.progress || 0}
+          radius={25}
+          valueSuffix={"%"}
+          activeStrokeWidth={5}
+          inActiveStrokeWidth={5}
+          inActiveStrokeColor={"#E0E0E0"}
+        />
+        <View style={styles.journeyTextContainer}>
+          <View style={styles.journeyCardHeader}>
+            <Text style={styles.journeyTitle}>{item.title}</Text>
+            <View style={styles.statusContainer}>
+              <View
+                style={[
+                  styles.statusDot,
+                  item.status === "Active" && styles.statusDotActive,
+                  item.status === "Planned" && styles.statusDotPlanned,
+                  item.status === "Completed" && styles.statusDotCompleted,
+                ]}
+              />
+              <Text style={styles.journeyStatus}>{item.status}</Text>
+            </View>
+          </View>
+          {item.description && (
+            <Text style={styles.journeyDescription} numberOfLines={2}>
+              {item.description}
+            </Text>
+          )}
+          {item.aiGeneratedPlan &&
+            item.aiGeneratedPlan.length > 0 &&
+            (() => {
+              const firstUncompletedStep = item.aiGeneratedPlan?.find(
+                (step) => !step.completed
+              );
+              const nextStepText = firstUncompletedStep
+                ? firstUncompletedStep.text
+                : item.aiGeneratedPlan && item.aiGeneratedPlan[0]
+                ? item.aiGeneratedPlan[0].text
+                : "No steps"; // Fallback to first step if all completed, then to generic message
+              const subText = firstUncompletedStep
+                ? "Next Step:"
+                : item.aiGeneratedPlan && item.aiGeneratedPlan[0]
+                ? "First Step:"
+                : "Plan:";
+
+              if (!item.aiGeneratedPlan || item.aiGeneratedPlan.length === 0)
+                return null;
+
+              return (
+                <View style={styles.nextStepContainer}>
+                  <Text style={styles.nextStepLabel}>{subText}</Text>
+                  <Text style={styles.nextStepText} numberOfLines={1}>
+                    {nextStepText}
+                  </Text>
+                </View>
+              );
+            })()}
+        </View>
       </View>
     </Card>
   );
@@ -121,8 +178,8 @@ export default function JourneysScreen() {
         />
       ) : (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>No journeys started yet.</Text>
-          <Text style={styles.emptySubText}>Tap "New Journey" to begin!</Text>
+          <Text style={styles.emptyText}>no journeys started yet.</Text>
+          <Text style={styles.emptySubText}>tap "new journey" to begin.</Text>
         </View>
       )}
     </Layout>
@@ -186,6 +243,15 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     borderColor: "#ffffff",
     borderWidth: 1,
+    backgroundColor: "#ffffff",
+  },
+  journeyCardContent: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  journeyTextContainer: {
+    marginLeft: 15,
+    flex: 1,
   },
   journeyCardHeader: {
     flexDirection: "row",
@@ -196,11 +262,58 @@ const styles = StyleSheet.create({
   journeyTitle: {
     fontSize: 18,
     fontFamily: "Gabarito-Medium",
+    flexShrink: 1,
+    marginRight: 8,
+  },
+  statusContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 6,
+  },
+  statusDotActive: {
+    backgroundColor: "green",
+  },
+  statusDotPlanned: {
+    backgroundColor: "yellow",
+  },
+  statusDotCompleted: {
+    backgroundColor: "grey",
   },
   journeyStatus: {
     fontSize: 14,
     fontFamily: "Gabarito-Regular",
     color: "#8E8E93",
+    marginLeft: 8,
+  },
+  journeyDescription: {
+    fontSize: 14,
+    fontFamily: "Gabarito-Regular",
+    color: "#555555",
+    marginTop: 3,
+    marginBottom: 5,
+  },
+  nextStepContainer: {
+    marginTop: 5,
+    backgroundColor: "#f0f0f0",
+    paddingVertical: 5,
+    paddingHorizontal: 8,
+    borderRadius: 5,
+  },
+  nextStepLabel: {
+    fontSize: 12,
+    fontFamily: "Gabarito-Bold",
+    color: "#333333",
+    marginBottom: 2,
+  },
+  nextStepText: {
+    fontSize: 13,
+    fontFamily: "Gabarito-Regular",
+    color: "#444444",
   },
   emptyContainer: {
     flex: 1,
@@ -210,14 +323,14 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 18,
-    fontFamily: "Gabarito-Regular",
+    fontFamily: "Gabarito-ExtraBold",
     color: "#555",
-    marginBottom: 10,
+    marginBottom: 5,
     textAlign: "center",
   },
   emptySubText: {
-    fontSize: 16,
-    fontFamily: "Gabarito-Light",
+    fontSize: 14,
+    fontFamily: "Gabarito-Regular",
     color: "#777",
     textAlign: "center",
   },

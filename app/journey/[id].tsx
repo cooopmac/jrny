@@ -1,3 +1,4 @@
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -6,9 +7,28 @@ import {
   Button,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from "react-native";
-import { fetchJourneyById, Journey } from "../../services/journeyService"; // Corrected path
+import {
+  fetchJourneyById,
+  Journey,
+  updateJourneyPlan,
+} from "../../services/journeyService"; // Corrected path
+
+// Helper to handle old and new plan structures
+const getStructuredPlan = (plan: any) => {
+  if (!plan || plan.length === 0) return [];
+  if (typeof plan[0] === "string") {
+    // Old format: string[], convert to new format
+    return plan.map((stepText: string) => ({
+      text: stepText,
+      completed: false,
+    }));
+  }
+  // Already new format or unhandled: return as is (or add more robust checks)
+  return plan;
+};
 
 const JourneyDetailScreen = () => {
   const { id } = useLocalSearchParams();
@@ -22,6 +42,12 @@ const JourneyDetailScreen = () => {
         try {
           setLoading(true);
           const fetchedJourney = await fetchJourneyById(id);
+          if (fetchedJourney) {
+            // Ensure aiGeneratedPlan is in the new structure
+            fetchedJourney.aiGeneratedPlan = getStructuredPlan(
+              fetchedJourney.aiGeneratedPlan
+            );
+          }
           setJourney(fetchedJourney);
         } catch (error) {
           Alert.alert("Error", "Failed to load journey details.");
@@ -32,6 +58,50 @@ const JourneyDetailScreen = () => {
       loadJourney();
     }
   }, [id]);
+
+  const handleToggleStep = async (index: number) => {
+    if (!journey || !journey.aiGeneratedPlan) return;
+
+    const originalPlan = JSON.parse(JSON.stringify(journey.aiGeneratedPlan)); // Deep copy for potential revert
+    let newPlan = [...originalPlan];
+    const wantsToComplete = !newPlan[index].completed;
+
+    if (wantsToComplete) {
+      // Check if all previous steps are completed
+      for (let i = 0; i < index; i++) {
+        if (!newPlan[i].completed) {
+          Alert.alert(
+            "Prerequisite Step",
+            `Please complete "${newPlan[i].text}" before this step.`
+          );
+          return; // Prevent completion
+        }
+      }
+      newPlan[index].completed = true;
+    } else {
+      // Wants to uncheck a step
+      newPlan[index].completed = false;
+      // Also uncheck all subsequent steps
+      for (let i = index + 1; i < newPlan.length; i++) {
+        newPlan[i].completed = false;
+      }
+    }
+
+    // Optimistically update local state
+    setJourney({ ...journey, aiGeneratedPlan: newPlan });
+
+    try {
+      if (typeof id === "string") {
+        await updateJourneyPlan(id, newPlan);
+      } else {
+        throw new Error("Journey ID not found for update.");
+      }
+    } catch (error) {
+      Alert.alert("Error", "Failed to update step status. Please try again.");
+      // Revert optimistic update to original plan before this toggle attempt
+      setJourney({ ...journey, aiGeneratedPlan: originalPlan });
+    }
+  };
 
   if (loading) {
     return (
@@ -77,13 +147,30 @@ const JourneyDetailScreen = () => {
       )}
 
       {/* Display AI Generated Plan */}
-      {journey.aiPlan && journey.aiPlan.length > 0 ? (
+      {journey.aiGeneratedPlan && journey.aiGeneratedPlan.length > 0 ? (
         <View style={styles.aiPlanContainer}>
-          <Text style={styles.aiPlanTitle}>AI-Generated Plan:</Text>
-          {journey.aiPlan.map((step, index) => (
-            <Text key={index} style={styles.aiPlanStep}>
-              - {step}
-            </Text>
+          <Text style={styles.aiPlanTitle}>AI-Generated Plan (Checklist):</Text>
+          {journey.aiGeneratedPlan.map((step, index) => (
+            <TouchableOpacity
+              key={index}
+              style={styles.checklistItem}
+              onPress={() => handleToggleStep(index)}
+            >
+              <Ionicons
+                name={step.completed ? "checkbox-outline" : "square-outline"}
+                size={24}
+                color={step.completed ? "green" : "#555"}
+                style={styles.checkboxIcon}
+              />
+              <Text
+                style={[
+                  styles.aiPlanStepText,
+                  step.completed && styles.completedStepText,
+                ]}
+              >
+                {step.text}
+              </Text>
+            </TouchableOpacity>
           ))}
         </View>
       ) : (
@@ -126,7 +213,7 @@ const styles = StyleSheet.create({
   aiPlanTitle: {
     fontSize: 16,
     fontWeight: "bold",
-    marginBottom: 5,
+    marginBottom: 10,
   },
   aiPlanStep: {
     fontSize: 14,
@@ -137,6 +224,25 @@ const styles = StyleSheet.create({
     marginTop: 20,
     fontStyle: "italic",
     textAlign: "center",
+  },
+  checklistItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  checkboxIcon: {
+    marginRight: 10,
+  },
+  aiPlanStepText: {
+    fontSize: 15,
+    flex: 1,
+    color: "#333",
+  },
+  completedStepText: {
+    textDecorationLine: "line-through",
+    color: "#aaa",
   },
 });
 

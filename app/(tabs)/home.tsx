@@ -77,10 +77,7 @@ export default function HomeScreen() {
       (journeys: Journey[]) => {
         // Explicitly type journeys
         setActiveJourneys(
-          journeys.filter(
-            (journey) =>
-              journey.status === "Active" || journey.status === "Planned"
-          )
+          journeys.filter((journey) => journey.status === "Active")
         );
         setLoadingJourneys(false);
       },
@@ -175,8 +172,25 @@ export default function HomeScreen() {
               <Text style={styles.goalCardTitle}>
                 {item.title.toLowerCase()}
               </Text>
-              <Text style={styles.goalCardDescription}>
-                {item.description || ""}
+              <Text style={styles.goalCardDescription} numberOfLines={1}>
+                {(() => {
+                  if (item.aiGeneratedPlan && item.aiGeneratedPlan.length > 0) {
+                    const firstUncompletedStep = item.aiGeneratedPlan.find(
+                      (step) => !step.completed
+                    );
+                    if (firstUncompletedStep) {
+                      return firstUncompletedStep.text;
+                    }
+                    // If all steps are completed, show the first step's text as a fallback for the plan
+                    if (
+                      item.aiGeneratedPlan[0] &&
+                      item.aiGeneratedPlan[0].text
+                    ) {
+                      return `First step: ${item.aiGeneratedPlan[0].text}`; // Or a different message like "All steps done!"
+                    }
+                  }
+                  return item.description || "No details or steps available.";
+                })()}
               </Text>
             </View>
           </TouchableOpacity>
@@ -252,7 +266,7 @@ export default function HomeScreen() {
           ) // Explicitly type journey here if needed, though often inferred
         ) : (
           <Text style={styles.emptyStateText}>
-            No active journeys yet. Tap the '+' to add one!
+            no active journeys yet. tap the '+' to add one.
           </Text>
         )}
 
@@ -457,7 +471,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: "center",
     color: "#777",
-    marginTop: 20,
+    marginTop: 10,
+    marginBottom: 5,
   },
   calendarContainer: {
     borderRadius: 15,

@@ -76,6 +76,7 @@ export default function CreateJourneyScreen() {
       "id" | "createdAt" | "updatedAt" | "aiPlan"
     > = {
       ...journeyFormDetails,
+      description: journeyFormDetails.description || "",
       userId: user.uid,
       status: "Planned",
       progress: 0,
@@ -138,7 +139,7 @@ export default function CreateJourneyScreen() {
             JSON.stringify(aiResponse.aiGeneratedPlan, null, 2)
           ); // Log plan to be saved
           await journeyRef.update({
-            aiPlan: aiResponse.aiGeneratedPlan,
+            aiGeneratedPlan: aiResponse.aiGeneratedPlan,
             updatedAt: serverTimestamp(),
           });
           console.log(
