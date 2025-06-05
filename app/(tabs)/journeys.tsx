@@ -1,10 +1,9 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 // import { getAuth } from "@react-native-firebase/auth"; // Removed
 // import firestore from "@react-native-firebase/firestore"; // Removed
 import { Card, Layout } from "@ui-kitten/components";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
   ActivityIndicator, // Keep Alert for potential local errors
   FlatList,
@@ -14,54 +13,16 @@ import {
   View,
 } from "react-native";
 import CircularProgress from "react-native-circular-progress-indicator"; // Added
-import { fetchJourneys, Journey } from "../../services/journeyService"; // Import the service
-
-// Key for AsyncStorage (must match the one in _layout.tsx and home.tsx)
-const LOGIN_STREAK_COUNT_KEY = "@App:loginStreakCount";
+import { useJourneys } from "../../hooks/useJourneys";
+import { useLoginStreak } from "../../hooks/useLoginStreak";
+import { Journey } from "../../types";
 
 export default function JourneysScreen() {
   const router = useRouter();
-  const [journeys, setJourneys] = useState<Journey[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loginStreak, setLoginStreak] = useState(0);
 
-  // Effect for fetching login streak
-  useEffect(() => {
-    const fetchLoginStreak = async () => {
-      try {
-        const streakCountString = await AsyncStorage.getItem(
-          LOGIN_STREAK_COUNT_KEY
-        );
-        if (streakCountString) {
-          setLoginStreak(parseInt(streakCountString, 10));
-        }
-      } catch (error) {
-        console.error("Failed to fetch login streak for display:", error);
-      }
-    };
-    fetchLoginStreak();
-  }, []);
-
-  useEffect(() => {
-    setLoading(true); // Ensure loading is true at the start of fetch
-    const unsubscribe = fetchJourneys(
-      (fetchedJourneys) => {
-        setJourneys(fetchedJourneys);
-        setLoading(false);
-      },
-      (error) => {
-        // Alert.alert("Error", "Could not fetch journeys."); // Alert is already handled in service
-        console.error("Error in JourneysScreen: ", error.message); // Log specific error message
-        setLoading(false);
-      }
-    );
-
-    return () => {
-      if (unsubscribe) {
-        unsubscribe();
-      }
-    };
-  }, []);
+  // Use custom hooks
+  const { loginStreak } = useLoginStreak();
+  const { journeys, loading } = useJourneys();
 
   const handleCreateNewJourney = () => {
     router.push("/create-journey");

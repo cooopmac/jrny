@@ -23,16 +23,7 @@ import {
   View,
 } from "react-native"; // Consolidated imports
 import { getAIGoalBreakdown } from "../services/aiService";
-import { Journey } from "../services/journeyService";
-
-// Define JourneyData interface (local to this file for form handling)
-interface JourneyFormData {
-  title: string;
-  description?: string;
-  lengthOfTime?: string;
-  priority?: "Low" | "Medium" | "High";
-  endDate?: Date;
-}
+import { Journey, JourneyFormData } from "../types";
 
 const priorityOptions = ["Low", "Medium", "High"];
 

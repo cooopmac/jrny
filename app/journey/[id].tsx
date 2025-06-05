@@ -1,10 +1,9 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Card, Layout, MenuItem, OverflowMenu } from "@ui-kitten/components";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   ScrollView,
   StyleProp,
   StyleSheet,
@@ -14,180 +13,17 @@ import {
   View,
 } from "react-native";
 import CircularProgress from "react-native-circular-progress-indicator";
-import Toast from "react-native-toast-message";
-import {
-  deleteJourney as deleteJourneyFromService,
-  fetchJourneyById,
-  Journey,
-  updateJourneyPlan,
-} from "../../services/journeyService"; // Corrected path
-
-// Helper to handle old and new plan structures
-const getStructuredPlan = (plan: any) => {
-  if (!plan || plan.length === 0) return [];
-  if (typeof plan[0] === "string") {
-    // Old format: string[], convert to new format
-    return plan.map((stepText: string) => ({
-      text: stepText,
-      completed: false,
-    }));
-  }
-  // Already new format or unhandled: return as is (or add more robust checks)
-  return plan;
-};
+import { useJourneyDetail } from "../../hooks/useJourneyDetail";
+import { formatFirestoreDate } from "../../utils/dateUtils";
 
 const JourneyDetailScreen = () => {
   const { id } = useLocalSearchParams();
   const router = useRouter();
-  const [journey, setJourney] = useState<Journey | null>(null);
-  const [loading, setLoading] = useState(true);
   const [menuVisible, setMenuVisible] = useState(false);
 
-  useEffect(() => {
-    if (id && typeof id === "string") {
-      const loadJourney = async () => {
-        try {
-          setLoading(true);
-          const fetchedJourney = await fetchJourneyById(id);
-          if (fetchedJourney) {
-            // Ensure aiGeneratedPlan is in the new structure
-            fetchedJourney.aiGeneratedPlan = getStructuredPlan(
-              fetchedJourney.aiGeneratedPlan
-            );
-          }
-          setJourney(fetchedJourney);
-        } catch (error) {
-          Toast.show({
-            type: "error",
-            text1: "Load Error",
-            text2: "Failed to load journey details.",
-            position: "bottom",
-          });
-          console.error("Failed to load journey details:", error);
-        } finally {
-          setLoading(false);
-        }
-      };
-      loadJourney();
-    }
-  }, [id]);
-
-  const handleToggleStep = async (index: number) => {
-    if (!journey || !journey.aiGeneratedPlan) return;
-
-    const originalPlan = JSON.parse(JSON.stringify(journey.aiGeneratedPlan));
-    let newPlan = [...originalPlan];
-    const wantsToComplete = !newPlan[index].completed;
-
-    if (wantsToComplete) {
-      for (let i = 0; i < index; i++) {
-        if (!newPlan[i].completed) {
-          Toast.show({
-            type: "info",
-            text1: "Prerequisite Step",
-            text2: `Please complete "${newPlan[i].text}" first.`,
-            position: "bottom",
-          });
-          return;
-        }
-      }
-      newPlan[index].completed = true;
-    } else {
-      newPlan[index].completed = false;
-      for (let i = index + 1; i < newPlan.length; i++) {
-        newPlan[i].completed = false;
-      }
-    }
-
-    const completedSteps = newPlan.filter((step) => step.completed).length;
-    const totalSteps = newPlan.length;
-    const progressPercentage =
-      totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
-
-    let newLocalStatus = journey.status;
-    if (journey.status === "Planned" && completedSteps > 0) {
-      newLocalStatus = "Active";
-    } else if (
-      journey.status === "Active" &&
-      completedSteps === 0 &&
-      totalSteps > 0
-    ) {
-      newLocalStatus = "Planned";
-    }
-
-    setJourney((prevJourney) => {
-      if (!prevJourney) return null;
-      return {
-        ...prevJourney,
-        aiGeneratedPlan: newPlan,
-        progress: progressPercentage,
-        status: newLocalStatus,
-      };
-    });
-
-    try {
-      if (typeof id === "string") {
-        await updateJourneyPlan(id, newPlan);
-      } else {
-        throw new Error("Journey ID not found for update.");
-      }
-    } catch (error) {
-      Toast.show({
-        type: "error",
-        text1: "Update Failed",
-        text2: "Failed to update step status. Please try again.",
-        position: "bottom",
-      });
-      setJourney({ ...journey, aiGeneratedPlan: originalPlan });
-    }
-  };
-
-  const handleDeleteJourney = async () => {
-    setMenuVisible(false);
-    if (!id || typeof id !== "string") {
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: "Journey ID is invalid.",
-      });
-      return;
-    }
-
-    Alert.alert(
-      "Delete Journey",
-      "Are you sure you want to delete this journey? This action cannot be undone.",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Delete",
-          onPress: async () => {
-            try {
-              await deleteJourneyFromService(id);
-              Toast.show({
-                type: "success",
-                text1: "Journey Deleted",
-                text2: "The journey has been successfully deleted.",
-                position: "bottom",
-              });
-              router.replace("/(tabs)/journeys"); // Navigate to journeys list
-            } catch (error) {
-              console.error("Failed to delete journey:", error);
-              Toast.show({
-                type: "error",
-                text1: "Delete Failed",
-                text2: "Could not delete the journey. Please try again.",
-                position: "bottom",
-              });
-            }
-          },
-          style: "destructive",
-        },
-      ]
-    );
-  };
+  // Use custom hook for journey management
+  const { journey, loading, updating, handleToggleStep, handleDeleteJourney } =
+    useJourneyDetail(typeof id === "string" ? id : "");
 
   const renderMenuAnchor = () => (
     <TouchableOpacity
@@ -223,11 +59,6 @@ const JourneyDetailScreen = () => {
       </Layout>
     );
   }
-
-  const formatDate = (timestamp: any) => {
-    if (!timestamp || !timestamp.seconds) return "N/A";
-    return new Date(timestamp.seconds * 1000).toLocaleDateString();
-  };
 
   return (
     <Layout style={styles.pageContainer}>
@@ -316,20 +147,20 @@ const JourneyDetailScreen = () => {
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Created:</Text>
             <Text style={styles.detailValue}>
-              {formatDate(journey.createdAt)}
+              {formatFirestoreDate(journey.createdAt)}
             </Text>
           </View>
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Updated:</Text>
             <Text style={styles.detailValue}>
-              {formatDate(journey.updatedAt)}
+              {formatFirestoreDate(journey.updatedAt)}
             </Text>
           </View>
           {journey.endDate && (
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Ends:</Text>
               <Text style={styles.detailValue}>
-                {formatDate(journey.endDate)}
+                {formatFirestoreDate(journey.endDate)}
               </Text>
             </View>
           )}

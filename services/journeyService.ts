@@ -1,23 +1,7 @@
 import { getAuth } from "@react-native-firebase/auth";
 import firestore from "@react-native-firebase/firestore";
 import { Alert } from "react-native";
-
-// Define Journey type/interface (consider moving to a shared types file if used elsewhere)
-export interface Journey {
-  id: string; // Firestore document ID
-  title: string;
-  description: string;
-  status: "Planned" | "Active" | "Completed";
-  progress?: number;
-  userId: string;
-  createdAt: any; // Firestore Timestamp
-  updatedAt: any; // Firestore Timestamp
-  lengthOfTime?: string;
-  priority?: "Low" | "Medium" | "High";
-  endDate?: any; // Firestore Timestamp or Date object
-  aiGeneratedPlan?: Array<{ text: string; completed: boolean }>; // Updated structure
-  dailyTasks?: string[]; // Added for daily recurring tasks
-}
+import { Journey } from "../types";
 
 export const fetchJourneys = (
   onSuccess: (journeys: Journey[]) => void,
@@ -27,6 +11,7 @@ export const fetchJourneys = (
   const user = auth.currentUser;
 
   if (!user) {
+    console.log("No user authenticated, skipping journey fetch");
     onError(new Error("User not authenticated."));
     return () => {}; // Return an empty unsubscribe function
   }
@@ -37,13 +22,28 @@ export const fetchJourneys = (
     .orderBy("createdAt", "desc")
     .onSnapshot(
       (querySnapshot) => {
+        // Check if user is still authenticated before processing
+        const currentUser = getAuth().currentUser;
+        if (!currentUser) {
+          console.log("User signed out during journey fetch, ignoring data");
+          return;
+        }
+
         const fetchedJourneys: Journey[] = [];
         querySnapshot.forEach((doc) => {
           fetchedJourneys.push({ id: doc.id, ...doc.data() } as Journey);
         });
         onSuccess(fetchedJourneys);
       },
-      (error) => {
+      (error: any) => {
+        // Check if this is a permission error due to sign out
+        if (error.code === "firestore/permission-denied") {
+          console.log(
+            "Permission denied - user likely signed out, ignoring error"
+          );
+          return;
+        }
+
         console.error("Error fetching journeys: ", error);
         Alert.alert("Error", "Could not fetch journeys.");
         onError(error);

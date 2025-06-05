@@ -1,6 +1,4 @@
 import Ionicons from "@expo/vector-icons/Ionicons"; // For FAB icon
-import AsyncStorage from "@react-native-async-storage/async-storage"; // Import AsyncStorage
-import { getAuth } from "@react-native-firebase/auth"; // Added
 import {
   Button,
   Card,
@@ -10,10 +8,9 @@ import {
   Text,
 } from "@ui-kitten/components";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   ActivityIndicator,
-  Modal,
   Text as RNText,
   ScrollView,
   StyleProp,
@@ -24,147 +21,35 @@ import {
 } from "react-native"; // Added ActivityIndicator, RNText, StyleProp, TextStyle
 import { Calendar } from "react-native-calendars"; // Import Calendar
 import CircularProgress from "react-native-circular-progress-indicator";
-import {
-  deleteJourney as deleteJourneyFromService,
-  fetchJourneys,
-  Journey,
-} from "../../services/journeyService"; // Corrected import path, Added deleteJourneyFromService
-
-// Key for AsyncStorage (must match the one in _layout.tsx)
-const LOGIN_STREAK_COUNT_KEY = "@App:loginStreakCount";
-const VIEWED_STORIES_DATES_KEY = "@App:viewedStoriesDates"; // Key for viewed story dates
-
-const getDate = () => {
-  const days = [
-    "sunday.",
-    "monday.",
-    "tuesday.",
-    "wednesday.",
-    "thursday.",
-    "friday.",
-    "saturday.",
-  ];
-
-  const date = new Date();
-  const day = date.getDay();
-  return days[day];
-};
-
-const getTodayDateString = () => {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = (today.getMonth() + 1).toString().padStart(2, "0");
-  const day = today.getDate().toString().padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
+import { DailyTasksModal } from "../../components/home/DailyTasksModal";
+import { DailyTasksStorySection } from "../../components/home/DailyTasksStorySection";
+import { useDailyTasks } from "../../hooks/useDailyTasks";
+import { useJourneys } from "../../hooks/useJourneys";
+import { useLoginStreak } from "../../hooks/useLoginStreak";
+import { deleteJourney as deleteJourneyFromService } from "../../services/journeyService"; // Corrected import path, Added deleteJourneyFromService
+import { Journey } from "../../types";
+import { getDate } from "../../utils/dateUtils";
 
 export default function HomeScreen() {
   const router = useRouter();
-  const [loginStreak, setLoginStreak] = useState(0); // State for login streak
-  const [activeJourneys, setActiveJourneys] = useState<Journey[]>([]); // State for active journeys
-  const [journeysForStories, setJourneysForStories] = useState<Journey[]>([]); // State for story bubbles
-  const [isDailyTaskModalVisible, setIsDailyTaskModalVisible] = useState(false);
-  const [selectedJourneyForModal, setSelectedJourneyForModal] =
-    useState<Journey | null>(null);
-  const [viewedStoryJourneyIds, setViewedStoryJourneyIds] = useState<string[]>(
-    []
-  ); // For unread story ring
-  const [loadingJourneys, setLoadingJourneys] = useState(true); // State for loading journeys
   const [menuVisibleForJourney, setMenuVisibleForJourney] = useState<
     string | null
   >(null); // State for active menu
-  const auth = getAuth(); // Added: Get auth instance
 
-  useEffect(() => {
-    const fetchLoginStreak = async () => {
-      try {
-        const streakCountString = await AsyncStorage.getItem(
-          LOGIN_STREAK_COUNT_KEY
-        );
-        if (streakCountString) {
-          setLoginStreak(parseInt(streakCountString, 10));
-        }
-      } catch (error) {
-        console.error("Failed to fetch login streak for display:", error);
-      }
-    };
-
-    fetchLoginStreak();
-  }, []); // Empty dependency array: run once on mount
-
-  // Effect to load initial viewed story statuses from AsyncStorage
-  useEffect(() => {
-    const loadViewedStories = async () => {
-      try {
-        const storedViewedDates = await AsyncStorage.getItem(
-          VIEWED_STORIES_DATES_KEY
-        );
-        const today = getTodayDateString();
-        const initiallyViewedIds: string[] = [];
-
-        if (storedViewedDates) {
-          const viewedDatesMap: { [key: string]: string } =
-            JSON.parse(storedViewedDates);
-          journeysForStories.forEach((journey) => {
-            if (viewedDatesMap[journey.id] === today) {
-              initiallyViewedIds.push(journey.id);
-            }
-          });
-        }
-        setViewedStoryJourneyIds(initiallyViewedIds);
-      } catch (error) {
-        console.error("Failed to load viewed stories dates:", error);
-      }
-    };
-
-    if (journeysForStories.length > 0) {
-      // Only run if there are stories to check
-      loadViewedStories();
-    }
-    // Rerun if journeysForStories changes, to correctly initialize based on available stories
-  }, [journeysForStories]);
-
-  // Effect to fetch journeys
-  useEffect(() => {
-    const currentUser = auth.currentUser; // Get current user for dependency
-
-    if (!currentUser) {
-      // If no user, don't fetch. Clear existing journeys and set loading to false.
-      setActiveJourneys([]);
-      setJourneysForStories([]);
-      setLoadingJourneys(false);
-      return; // Exit early
-    }
-
-    setLoadingJourneys(true);
-    const unsubscribe = fetchJourneys(
-      (journeys: Journey[]) => {
-        setActiveJourneys(
-          journeys.filter((journey) => journey.status === "Active")
-        );
-        // Filter for stories: Active or Planned journeys with daily tasks
-        setJourneysForStories(
-          journeys.filter(
-            (j) =>
-              j.status === "Active" && j.dailyTasks && j.dailyTasks.length > 0
-          )
-        );
-        setLoadingJourneys(false);
-      },
-      (error: Error) => {
-        // Explicitly type error
-        console.error("Failed to fetch journeys for home screen:", error);
-        setLoadingJourneys(false);
-        // Optionally, show an alert or a message to the user
-      }
-    );
-
-    return () => {
-      if (unsubscribe) {
-        unsubscribe();
-      }
-    };
-  }, [auth.currentUser]); // Depend on currentUser
+  // Use custom hooks
+  const { loginStreak } = useLoginStreak();
+  const {
+    activeJourneys,
+    journeysForStories,
+    loading: loadingJourneys,
+  } = useJourneys();
+  const {
+    selectedJourneyForModal,
+    isDailyTaskModalVisible,
+    openDailyTaskModal,
+    closeDailyTaskModal,
+    isStoryViewed,
+  } = useDailyTasks(journeysForStories);
 
   const handleCreateNewJourney = () => {
     router.push("/create-journey");
@@ -286,120 +171,6 @@ export default function HomeScreen() {
     );
   };
 
-  const DailyTasksStorySection = () => {
-    if (journeysForStories.length === 0 || loadingJourneys) {
-      return null;
-    }
-    return (
-      <View style={styles.storiesOuterContainer}>
-        <Text style={styles.storiesSectionTitle}>daily focus.</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.storiesScrollContent}
-        >
-          {journeysForStories.map((journey) => {
-            const isViewed = viewedStoryJourneyIds.includes(journey.id);
-            return (
-              <TouchableOpacity
-                key={journey.id}
-                style={styles.storyItem}
-                onPress={async () => {
-                  // Make onPress async
-                  setSelectedJourneyForModal(journey);
-                  setIsDailyTaskModalVisible(true);
-                  if (!isViewed) {
-                    setViewedStoryJourneyIds((prev) => [...prev, journey.id]);
-                    // Persist this view for today
-                    try {
-                      const today = getTodayDateString();
-                      const storedViewedDates = await AsyncStorage.getItem(
-                        VIEWED_STORIES_DATES_KEY
-                      );
-                      const viewedDatesMap = storedViewedDates
-                        ? JSON.parse(storedViewedDates)
-                        : {};
-                      viewedDatesMap[journey.id] = today;
-                      await AsyncStorage.setItem(
-                        VIEWED_STORIES_DATES_KEY,
-                        JSON.stringify(viewedDatesMap)
-                      );
-                    } catch (error) {
-                      console.error("Failed to save viewed story date:", error);
-                    }
-                  }
-                }}
-              >
-                <View
-                  style={[
-                    styles.storyBubble, // Base style
-                    isViewed
-                      ? styles.storyBubbleViewed
-                      : styles.storyBubbleUnviewed, // Conditional border
-                  ]}
-                >
-                  <Ionicons name="flash-outline" size={26} color="#FFF" />
-                </View>
-                <Text style={styles.storyTitleText} numberOfLines={1}>
-                  {journey.title}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-      </View>
-    );
-  };
-
-  const DailyTasksModal = () => {
-    if (!selectedJourneyForModal) return null;
-
-    return (
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={isDailyTaskModalVisible}
-        onRequestClose={() => setIsDailyTaskModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>
-              Daily Tasks for: {selectedJourneyForModal.title}
-            </Text>
-            {selectedJourneyForModal.dailyTasks?.length ? (
-              selectedJourneyForModal.dailyTasks.map(
-                (
-                  task: string,
-                  index: number // Added types for task and index
-                ) => (
-                  <View key={index} style={styles.modalTaskItem}>
-                    <Ionicons
-                      name="flash-outline"
-                      size={18}
-                      color="#FFC107"
-                      style={styles.modalTaskIcon}
-                    />
-                    <Text style={styles.modalTaskText}>{task}</Text>
-                  </View>
-                )
-              )
-            ) : (
-              <Text style={styles.modalTaskText}>
-                No daily tasks specified for this journey.
-              </Text>
-            )}
-            <Button
-              onPress={() => setIsDailyTaskModalVisible(false)}
-              style={styles.modalCloseButton}
-            >
-              <RNText style={styles.modalCloseButtonText}>Close</RNText>
-            </Button>
-          </View>
-        </View>
-      </Modal>
-    );
-  };
-
   return (
     <Layout style={styles.container}>
       {/* Sticky Header Part */}
@@ -418,7 +189,11 @@ export default function HomeScreen() {
         contentContainerStyle={styles.scrollContentContainer}
       >
         {/* Daily Tasks Story Section */}
-        <DailyTasksStorySection />
+        <DailyTasksStorySection
+          journeysForStories={journeysForStories}
+          isStoryViewed={isStoryViewed}
+          onStoryPress={openDailyTaskModal}
+        />
 
         <Card style={styles.focusCard}>
           <View>
@@ -526,7 +301,11 @@ export default function HomeScreen() {
           />
         </View>
       </ScrollView>
-      <DailyTasksModal />
+      <DailyTasksModal
+        visible={isDailyTaskModalVisible}
+        journey={selectedJourneyForModal}
+        onClose={closeDailyTaskModal}
+      />
     </Layout>
   );
 }
