@@ -1,5 +1,6 @@
 import Ionicons from "@expo/vector-icons/Ionicons"; // For FAB icon
 import AsyncStorage from "@react-native-async-storage/async-storage"; // Import AsyncStorage
+import { getAuth } from "@react-native-firebase/auth"; // Added
 import {
   Button,
   Card,
@@ -72,6 +73,7 @@ export default function HomeScreen() {
   const [menuVisibleForJourney, setMenuVisibleForJourney] = useState<
     string | null
   >(null); // State for active menu
+  const auth = getAuth(); // Added: Get auth instance
 
   useEffect(() => {
     const fetchLoginStreak = async () => {
@@ -124,6 +126,16 @@ export default function HomeScreen() {
 
   // Effect to fetch journeys
   useEffect(() => {
+    const currentUser = auth.currentUser; // Get current user for dependency
+
+    if (!currentUser) {
+      // If no user, don't fetch. Clear existing journeys and set loading to false.
+      setActiveJourneys([]);
+      setJourneysForStories([]);
+      setLoadingJourneys(false);
+      return; // Exit early
+    }
+
     setLoadingJourneys(true);
     const unsubscribe = fetchJourneys(
       (journeys: Journey[]) => {
@@ -152,7 +164,7 @@ export default function HomeScreen() {
         unsubscribe();
       }
     };
-  }, []);
+  }, [auth.currentUser]); // Depend on currentUser
 
   const handleCreateNewJourney = () => {
     router.push("/create-journey");
@@ -280,7 +292,7 @@ export default function HomeScreen() {
     }
     return (
       <View style={styles.storiesOuterContainer}>
-        <Text style={styles.storiesSectionTitle}>Daily Focus</Text>
+        <Text style={styles.storiesSectionTitle}>daily focus.</Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}

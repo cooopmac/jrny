@@ -13,7 +13,15 @@ import {
 } from "@ui-kitten/components";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { ActivityIndicator, ScrollView, StyleSheet } from "react-native";
+import {
+  ActivityIndicator,
+  ScrollView,
+  StyleProp,
+  StyleSheet,
+  TextStyle,
+  TouchableOpacity,
+  View,
+} from "react-native"; // Consolidated imports
 import { getAIGoalBreakdown } from "../services/aiService";
 import { Journey } from "../services/journeyService";
 
@@ -214,9 +222,26 @@ export default function CreateJourneyScreen() {
 
   return (
     <Layout style={styles.container} level="1">
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* Back Button */}
+        <TouchableOpacity
+          style={styles.backButtonContainer}
+          onPress={() => router.back()}
+          disabled={isSaving}
+        >
+          <Ionicons
+            name="arrow-back-outline"
+            size={24} // Slightly larger for better touch target
+            color="#333333" // Consistent with header text color
+          />
+          <Text style={styles.backButtonText}>back</Text>
+        </TouchableOpacity>
+
         <Text category="h4" style={styles.header}>
-          Create New Journey
+          create new journey.
         </Text>
 
         <Input
@@ -226,24 +251,29 @@ export default function CreateJourneyScreen() {
           onChangeText={setTitle}
           style={styles.input}
           disabled={isSaving}
+          size="large"
         />
 
         <Input
           label="Description (Optional)"
-          placeholder="e.g., A brief overview"
+          placeholder="e.g., A brief overview of your goal"
           value={description}
           onChangeText={setDescription}
           style={styles.input}
+          multiline={true}
+          textStyle={{ minHeight: 64, textAlignVertical: "top" }}
           disabled={isSaving}
+          size="large"
         />
 
         <Input
           label="Length of Time (Optional)"
-          placeholder="e.g., 30 days, 2 months"
+          placeholder="e.g., 30 days, 2 months, 1 year"
           value={lengthOfTime}
           onChangeText={setLengthOfTime}
           style={styles.input}
           disabled={isSaving}
+          size="large"
         />
 
         <Select
@@ -258,45 +288,42 @@ export default function CreateJourneyScreen() {
           }
           style={styles.input}
           disabled={isSaving}
+          size="large"
         >
-          {priorityOptions.map((p) => (
-            <SelectItem title={p} key={p} />
+          {priorityOptions.map((option) => (
+            <SelectItem key={option} title={option} />
           ))}
         </Select>
 
         <Datepicker
           label="End Date (Optional)"
-          placeholder="Pick an end date"
+          placeholder="Pick a target date"
           date={endDate}
-          onSelect={(nextDate) => setEndDate(nextDate)}
+          onSelect={setEndDate}
           accessoryRight={CalendarIcon}
           style={styles.input}
           disabled={isSaving}
+          size="large"
         />
 
         {isSaving ? (
-          <ActivityIndicator
-            size="large"
-            color="#0000ff"
-            style={styles.saveButton}
-          />
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#007AFF" />
+          </View>
         ) : (
           <Button
-            onPress={handleSaveJourney}
             style={styles.saveButton}
-            disabled={isSaving}
+            onPress={handleSaveJourney}
+            disabled={isSaving || !title.trim()}
+            size="large"
           >
-            Save Journey & Generate Plan
+            {(props: { style?: StyleProp<TextStyle> }) => (
+              <Text {...props} style={[props.style, styles.saveButtonText]}>
+                Create Journey & Get AI Plan ✨
+              </Text>
+            )}
           </Button>
         )}
-        <Button
-          onPress={() => router.back()}
-          appearance="ghost"
-          style={styles.cancelButton}
-          disabled={isSaving}
-        >
-          Cancel
-        </Button>
       </ScrollView>
     </Layout>
   );
@@ -305,22 +332,48 @@ export default function CreateJourneyScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#f1f2f4",
   },
   scrollContainer: {
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+  },
+  backButtonContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  backButtonText: {
+    fontFamily: "Gabarito-Regular",
+    fontSize: 16,
+    color: "#333333",
+    marginLeft: 4,
   },
   header: {
-    marginBottom: 20,
+    fontFamily: "Gabarito-ExtraBold",
+    fontSize: 28,
+    marginBottom: 24,
+    color: "#333333",
     textAlign: "center",
-    fontFamily: "Gabarito-Bold",
   },
   input: {
-    marginBottom: 15,
+    marginBottom: 16,
+    borderRadius: 20,
   },
   saveButton: {
-    marginTop: 20,
+    marginTop: 24,
+    backgroundColor: "#000000",
+    borderRadius: 25,
+    paddingVertical: 5,
   },
-  cancelButton: {
-    marginTop: 10,
+  saveButtonText: {
+    color: "#ffffff",
+    fontFamily: "Gabarito-Bold",
+    fontSize: 16,
+  },
+  loadingContainer: {
+    marginTop: 24,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
