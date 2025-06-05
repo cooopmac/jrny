@@ -231,9 +231,7 @@ export default function CreateJourneyScreen() {
           <Text style={styles.backButtonText}>back</Text>
         </TouchableOpacity>
 
-        <Text category="h4" style={styles.header}>
-          create new journey.
-        </Text>
+        <Text style={styles.header}>create a new journey.</Text>
 
         <Input
           label="Journey Title"
@@ -350,6 +348,7 @@ const styles = StyleSheet.create({
   input: {
     marginBottom: 16,
     borderRadius: 20,
+    borderColor: "#ffffff",
   },
   saveButton: {
     marginTop: 24,

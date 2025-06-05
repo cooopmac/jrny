@@ -213,7 +213,6 @@ const styles = StyleSheet.create({
   createButton: {
     padding: 8,
     borderRadius: 20,
-    backgroundColor: "rgba(0, 0, 0, 0.05)",
   },
   listContentContainer: {
     paddingHorizontal: 15,

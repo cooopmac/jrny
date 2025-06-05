@@ -431,7 +431,6 @@ const styles = StyleSheet.create({
     marginLeft: 10, // Add some space between text and button
     padding: 8, // Make it easier to press
     borderRadius: 20,
-    backgroundColor: "rgba(0, 0, 0, 0.05)",
   },
   goalCard: {
     marginBottom: 15,
