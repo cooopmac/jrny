@@ -374,9 +374,9 @@ export default function HomeScreen() {
                 ) => (
                   <View key={index} style={styles.modalTaskItem}>
                     <Ionicons
-                      name="ellipse-outline"
+                      name="flash-outline"
                       size={18}
-                      color="#007AFF"
+                      color="#FFC107"
                       style={styles.modalTaskIcon}
                     />
                     <Text style={styles.modalTaskText}>{task}</Text>
@@ -391,9 +391,8 @@ export default function HomeScreen() {
             <Button
               onPress={() => setIsDailyTaskModalVisible(false)}
               style={styles.modalCloseButton}
-              appearance="ghost"
             >
-              Close
+              <RNText style={styles.modalCloseButtonText}>Close</RNText>
             </Button>
           </View>
         </View>
@@ -760,7 +759,7 @@ const styles = StyleSheet.create({
     fontFamily: "Gabarito-Bold",
     fontSize: 20,
     marginBottom: 20,
-    color: "#333",
+    color: "#333333",
     textAlign: "center",
   },
   modalTaskItem: {
@@ -776,10 +775,18 @@ const styles = StyleSheet.create({
   modalTaskText: {
     fontFamily: "Gabarito-Regular",
     fontSize: 16,
-    color: "#444",
+    color: "#333333",
     flex: 1,
   },
   modalCloseButton: {
     marginTop: 25,
+    borderColor: "#000000",
+    backgroundColor: "#000000",
+    borderRadius: 25,
+  },
+  modalCloseButtonText: {
+    color: "#ffffff",
+    fontFamily: "Gabarito-Bold",
+    fontSize: 16,
   },
 });
