@@ -105,7 +105,7 @@ export default function JourneysScreen() {
   if (loading) {
     return (
       <Layout style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
+        <ActivityIndicator size="large" color="#000000" />
       </Layout>
     );
   }
@@ -124,6 +124,7 @@ export default function JourneysScreen() {
           <TouchableOpacity
             style={styles.createButton}
             onPress={handleCreateNewJourney}
+            activeOpacity={0.6}
           >
             <Ionicons name="add-circle-outline" size={24} color="#000000" />
           </TouchableOpacity>
@@ -136,6 +137,15 @@ export default function JourneysScreen() {
           renderItem={renderJourneyItem}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContentContainer}
+          showsVerticalScrollIndicator={false}
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          windowSize={10}
+          getItemLayout={(data, index) => ({
+            length: 120,
+            offset: 120 * index,
+            index,
+          })}
         />
       ) : (
         <View style={styles.emptyContainer}>
@@ -185,6 +195,14 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: 15,
     marginRight: 10,
+    shadowColor: "#FF9800",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
   },
   streakText: {
     fontFamily: "Gabarito-Bold",
@@ -193,7 +211,9 @@ const styles = StyleSheet.create({
     marginLeft: 5,
   },
   createButton: {
-    padding: 5,
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: "rgba(0, 0, 0, 0.05)",
   },
   listContentContainer: {
     paddingHorizontal: 15,
@@ -205,6 +225,14 @@ const styles = StyleSheet.create({
     borderColor: "#ffffff",
     borderWidth: 1,
     backgroundColor: "#ffffff",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 4,
   },
   journeyCardContent: {
     flexDirection: "row",

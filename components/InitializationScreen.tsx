@@ -18,7 +18,6 @@ const InitializationScreen = () => {
             color="#000000"
             style={{ padding: 4 }}
           />
-          <Text style={styles.subText}>Loading...</Text>
         </View>
       </Layout>
     </ApplicationProvider>

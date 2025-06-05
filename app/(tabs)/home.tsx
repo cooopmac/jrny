@@ -88,6 +88,7 @@ export default function HomeScreen() {
       <TouchableOpacity
         style={styles.menuAnchorButton}
         onPress={() => setMenuVisibleForJourney(item.id)}
+        activeOpacity={0.6}
       >
         <Ionicons name="ellipsis-vertical" size={24} color="#333333" />
       </TouchableOpacity>
@@ -108,6 +109,7 @@ export default function HomeScreen() {
         <View style={styles.goalCardContent}>
           <TouchableOpacity
             style={{ flexDirection: "row", alignItems: "center", flex: 1 }}
+            activeOpacity={0.7}
             onPress={() => {
               console.log("Navigate to journey:", item.id);
               router.push({
@@ -187,6 +189,7 @@ export default function HomeScreen() {
       <ScrollView
         style={styles.mainScroll}
         contentContainerStyle={styles.scrollContentContainer}
+        showsVerticalScrollIndicator={false}
       >
         {/* Daily Tasks Story Section */}
         <DailyTasksStorySection
@@ -207,6 +210,7 @@ export default function HomeScreen() {
               style={styles.focusCardButton}
               status="basic"
               onPress={() => router.push("/journeys")}
+              activeOpacity={0.8}
             >
               <Text style={styles.focusCardButtonText}>
                 view your journeys.
@@ -220,12 +224,13 @@ export default function HomeScreen() {
           <TouchableOpacity
             onPress={handleCreateNewJourney}
             style={styles.addButton}
+            activeOpacity={0.6}
           >
             <Ionicons name="add-circle-outline" size={28} color="#333333" />
           </TouchableOpacity>
         </View>
         {loadingJourneys ? (
-          <ActivityIndicator color="#007AFF" style={styles.loadingIndicator} />
+          <ActivityIndicator color="#000000" style={styles.loadingIndicator} />
         ) : activeJourneys.length > 0 ? (
           activeJourneys.map((journey: Journey) =>
             renderGoalItem({ item: journey })
@@ -344,6 +349,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 15,
+    shadowColor: "#FF9800",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
   },
   streakText: {
     fontFamily: "Gabarito-Bold",
@@ -357,6 +370,14 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     padding: 40, // Increased padding for better look
     alignItems: "center", // Center button if it's not full width
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
   },
   focusCardText: {
     fontFamily: "Gabarito-Bold",
@@ -375,9 +396,17 @@ const styles = StyleSheet.create({
   focusCardButton: {
     backgroundColor: "#ffffff", // Example button color
     borderRadius: 25,
-    paddingVertical: 5,
-    paddingHorizontal: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 24,
     alignSelf: "center", // Center button
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   focusCardButtonText: {
     color: "#000000",
@@ -400,13 +429,23 @@ const styles = StyleSheet.create({
   },
   addButton: {
     marginLeft: 10, // Add some space between text and button
-    padding: 5, // Make it easier to press
+    padding: 8, // Make it easier to press
+    borderRadius: 20,
+    backgroundColor: "rgba(0, 0, 0, 0.05)",
   },
   goalCard: {
     marginBottom: 15,
     backgroundColor: "#ffffff", // White background for cards
     borderRadius: 15,
     borderColor: "#ffffff",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
   goalCardContent: {
     flexDirection: "row",
@@ -454,9 +493,12 @@ const styles = StyleSheet.create({
   loadingIndicator: {
     // Added style for loading indicator
     marginTop: 20,
+    alignSelf: "center",
   },
   menuAnchorButton: {
     padding: 8, // Added padding for easier touch
+    borderRadius: 16,
+    backgroundColor: "rgba(0, 0, 0, 0.03)",
   },
   overflowMenuBackdrop: {
     backgroundColor: "rgba(0, 0, 0, 0.5)",

@@ -299,7 +299,7 @@ export default function CreateJourneyScreen() {
 
         {isSaving ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#007AFF" />
+            <ActivityIndicator size="large" color="#000000" />
           </View>
         ) : (
           <Button

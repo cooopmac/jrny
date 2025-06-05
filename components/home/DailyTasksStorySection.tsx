@@ -39,6 +39,7 @@ export const DailyTasksStorySection: React.FC<DailyTasksStorySectionProps> = ({
               key={journey.id}
               style={styles.storyItem}
               onPress={() => onStoryPress(journey)}
+              activeOpacity={0.8}
             >
               <View
                 style={[
@@ -89,6 +90,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 8,
+    shadowColor: "#FFC107",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
   },
   storyBubbleViewed: {
     borderWidth: 2,
