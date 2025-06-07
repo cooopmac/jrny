@@ -1,42 +1,41 @@
 {
   "expo": {
-    "name": "OpenJourney",
-    "slug": "OpenJourney",
+    "name": "reanimated",
+    "slug": "reanimated",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "openjourney",
+    "scheme": "reanimated",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.journey.app"
+      "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.openjourney.app",
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.anonymous.reanimated"
     },
     "web": {
       "bundler": "metro",
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "output": "static"
     },
     "plugins": [
       "expo-router",
       [
-        "expo-splash-screen",
+        "expo-font",
         {
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 200,
-          "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "fonts": [
+            "./assets/fonts/Gabarito-Regular.ttf",
+            "./assets/fonts/Gabarito-Medium.ttf",
+            "./assets/fonts/Gabarito-SemiBold.ttf",
+            "./assets/fonts/Gabarito-Bold.ttf",
+            "./assets/fonts/Gabarito-Black.ttf",
+            "./assets/fonts/Gabarito-ExtraBold.ttf"
+          ]
         }
-      ],
-      "expo-font"
+      ]
     ],
     "experiments": {
       "typedRoutes": true

@@ -15,20 +15,6 @@ pluginManagement {
     "../android/expo-gradle-plugin"
   ).absolutePath
   includeBuild(expoPluginsPath)
-
-  repositories {
-    google()
-    mavenCentral()
-    gradlePluginPortal()
-  }
-
-  resolutionStrategy {
-    eachPlugin {
-      if (requested.id.id == "react-native-gradle-plugin") {
-        useModule("com.facebook.react:react-native-gradle-plugin:${requested.version}")
-      }
-    }
-  }
 }
 
 plugins {
@@ -45,7 +31,7 @@ extensions.configure(com.facebook.react.ReactSettingsExtension) { ex ->
 }
 expoAutolinking.useExpoModules()
 
-rootProject.name = 'OpenJourney'
+rootProject.name = 'reanimated'
 
 expoAutolinking.useExpoVersionCatalog()
 

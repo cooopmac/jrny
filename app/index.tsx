@@ -1,60 +1,48 @@
-import { Button, Layout, Text } from "@ui-kitten/components";
-import { useRouter } from "expo-router";
-import React from "react";
-import { View } from "react-native";
+import { View, StyleSheet, Text, ActivityIndicator } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useEffect } from "react";
+import { router } from "expo-router";
 
-export default function Index() {
-  const router = useRouter();
+export default function LoadingScreen() {
+  useEffect(() => {
+    // Navigate to tabs after 2 seconds
+    const timer = setTimeout(() => {
+      router.replace("/(tabs)/home");
+    }, 2000);
 
-  const handlePress = () => {
-    router.push("/signup");
-  };
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
-    <Layout
-      style={{
-        flex: 1,
-        justifyContent: "space-between",
-        alignItems: "center",
-        paddingHorizontal: 20,
-        backgroundColor: "#f1f2f4",
-        paddingBottom: 20,
-      }}
-    >
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <Text style={{ fontFamily: "Gabarito-ExtraBold", fontSize: 42 }}>
-          jrny.
-        </Text>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.content}>
+        <Text style={styles.loadingText}>jrny.</Text>
+        <ActivityIndicator
+          size="large"
+          color="#000000"
+          style={styles.spinner}
+        />
       </View>
-      <Button
-        size="giant"
-        style={{
-          width: "100%",
-          backgroundColor: "#000000",
-          borderColor: "#000000",
-          borderRadius: 25,
-        }}
-        onPress={handlePress}
-      >
-        <Text
-          style={{
-            color: "#FFFFFF",
-            fontFamily: "Gabarito-Regular",
-          }}
-        >
-          start your journey
-        </Text>
-      </Button>
-      <Text
-        style={{
-          fontFamily: "Gabarito-Regular",
-          fontSize: 16,
-          marginVertical: 8,
-        }}
-        onPress={() => router.push("/login")}
-      >
-        already have an account? login.
-      </Text>
-    </Layout>
+    </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "white",
+  },
+  content: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    fontFamily: "Gabarito-ExtraBold",
+    fontSize: 32,
+    color: "black",
+  },
+  spinner: {
+    marginTop: 10,
+  },
+});
