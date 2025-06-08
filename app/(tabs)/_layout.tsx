@@ -1,6 +1,5 @@
-import { Ionicons } from "@expo/vector-icons";
+import Navbar from "@/components/home/navbar";
 import { Tabs } from "expo-router";
-import Navbar from "@/components/navbar";
 import { View } from "react-native";
 
 export default function TabLayout() {

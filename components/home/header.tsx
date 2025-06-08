@@ -1,11 +1,11 @@
-import Animated, {
-  useSharedValue,
-  withTiming,
-  useAnimatedStyle,
-  withDelay,
-} from "react-native-reanimated";
-import { View, StyleSheet } from "react-native";
 import { useEffect } from "react";
+import { StyleSheet, View } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withTiming,
+} from "react-native-reanimated";
 import { StreakDisplay } from "./streak";
 
 // Separate component for each animated character
@@ -77,7 +77,7 @@ export default function Header() {
 
 const styles = StyleSheet.create({
   header: {
-    height: 100,
+    height: 80,
     flexDirection: "row",
     backgroundColor: "white",
     justifyContent: "space-between",

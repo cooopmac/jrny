@@ -1,14 +1,14 @@
 // components/CustomTabBar.js
-import { View, TouchableOpacity, StyleSheet, Text } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withDelay,
-  interpolate,
-} from "react-native-reanimated";
 import { useEffect, useState } from "react";
+import { StyleSheet, Text, TouchableOpacity } from "react-native";
+import Animated, {
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withSpring,
+} from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function Navbar({ state, descriptors, navigation }: any) {
   const insets = useSafeAreaInsets();
