@@ -1,5 +1,6 @@
 import Card from "@/components/home/daily-card";
 import DailyStories from "@/components/home/daily-stories";
+import TodaysFocus from "@/components/home/todays-focus";
 import { StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Calender from "../../components/home/calender";
@@ -12,6 +13,7 @@ export default function HomeScreen() {
       <Calender />
       <DailyStories />
       <Card />
+      <TodaysFocus />
     </SafeAreaView>
   );
 }

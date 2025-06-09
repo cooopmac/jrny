@@ -148,7 +148,7 @@ const StoryCircle = ({
           </LinearGradient>
         )}
       </Animated.View>
-      <Text style={styles.storyTitle}>{story.title}</Text>
+      <Text style={styles.storyTitle}>{story.title.toLowerCase()}</Text>
     </TouchableOpacity>
   );
 };
@@ -275,12 +275,12 @@ const StoryCard = ({
               <View style={styles.cardIconContainer}>
                 <Text style={styles.cardIcon}>{story.title[0]}</Text>
               </View>
-              <Text style={styles.cardTitle}>{story.title}</Text>
+              <Text style={styles.cardTitle}>{story.title.toLowerCase()}</Text>
             </View>
 
             <View style={styles.cardContent}>
               <View style={styles.progressSection}>
-                <Text style={styles.progressText}>Today's Progress</Text>
+                <Text style={styles.progressText}>today's progress.</Text>
                 <View style={styles.progressBar}>
                   <View
                     style={[styles.progressFill, { width: `${progress}%` }]}
@@ -291,7 +291,7 @@ const StoryCard = ({
                 </Text>
               </View>
 
-              <Text style={styles.tasksTitle}>Daily Tasks</Text>
+              <Text style={styles.tasksTitle}>daily tasks.</Text>
               {story.tasks.map((task: any, index: any) => (
                 <TaskItem key={task.id} task={task} index={index} />
               ))}
@@ -395,7 +395,7 @@ export default function StoriesSection() {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: "white",
-    paddingTop: 20,
+    paddingTop: 10,
   },
   storiesScrollContainer: {
     paddingHorizontal: 10,

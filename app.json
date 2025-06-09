@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "reanimated",
-    "slug": "reanimated",
+    "name": "jrny",
+    "slug": "jrny",
     "version": "1.0.0",
     "orientation": "portrait",
-    "scheme": "reanimated",
+    "scheme": "jrny",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -15,7 +15,7 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.anonymous.reanimated"
+      "package": "com.anonymous.jrny"
     },
     "web": {
       "bundler": "metro",

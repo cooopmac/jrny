@@ -25,6 +25,7 @@ export default function Calender() {
           borderBottomWidth: 1,
           borderBottomColor: "#e0e0e0",
           paddingBottom: 10,
+          paddingHorizontal: 15,
         },
       ]}
     >
@@ -44,7 +45,7 @@ export default function Calender() {
           fontSize: 14,
         }}
         dateNameStyle={{
-          fontFamily: "Gabarito-Regular",
+          fontFamily: "Gabarito-Bold",
           color: "#e0e0e0",
           fontSize: 12,
         }}
@@ -54,7 +55,7 @@ export default function Calender() {
           fontSize: 16,
         }}
         highlightDateNameStyle={{
-          fontFamily: "Gabarito-Regular",
+          fontFamily: "Gabarito-Bold",
           color: "#000000",
           fontSize: 14,
         }}
