@@ -14,31 +14,36 @@ const AnimatedText = Animated.createAnimatedComponent(Text);
 const AnimatedTouchableOpacity =
   Animated.createAnimatedComponent(TouchableOpacity);
 
+// Global variable to track if animation has played
+let hasPlayedAnimation = false;
+
 export default function LandingPage() {
   const logoLetters = ["j", "r", "n", "y", "."];
 
-  // Single animation progress value (0 to 1)
-  const animationProgress = useSharedValue(0);
-
-  // Other UI elements
-  const buttonsOpacity = useSharedValue(0);
-  const buttonsTranslateY = useSharedValue(50);
-  const subtitleOpacity = useSharedValue(0);
-  const subtitleTranslateY = useSharedValue(20);
+  // Initialize with final values if animation has already played
+  const animationProgress = useSharedValue(hasPlayedAnimation ? 1 : 0);
+  const buttonsOpacity = useSharedValue(hasPlayedAnimation ? 1 : 0);
+  const buttonsTranslateY = useSharedValue(hasPlayedAnimation ? 0 : 50);
+  const subtitleOpacity = useSharedValue(hasPlayedAnimation ? 1 : 0);
+  const subtitleTranslateY = useSharedValue(hasPlayedAnimation ? 0 : 20);
 
   useEffect(() => {
-    // Animate the logo letters
-    animationProgress.value = withTiming(1, { duration: 1500 }, () => {
-      // Start subtitle and buttons animation
-      subtitleOpacity.value = withTiming(1, { duration: 800 });
-      subtitleTranslateY.value = withTiming(0, { duration: 800 });
+    if (!hasPlayedAnimation) {
+      hasPlayedAnimation = true;
 
-      buttonsOpacity.value = withDelay(200, withTiming(1, { duration: 800 }));
-      buttonsTranslateY.value = withDelay(
-        200,
-        withTiming(0, { duration: 800 })
-      );
-    });
+      // Animate the logo letters
+      animationProgress.value = withTiming(1, { duration: 1500 }, () => {
+        // Start subtitle and buttons animation
+        subtitleOpacity.value = withTiming(1, { duration: 800 });
+        subtitleTranslateY.value = withTiming(0, { duration: 800 });
+
+        buttonsOpacity.value = withDelay(200, withTiming(1, { duration: 800 }));
+        buttonsTranslateY.value = withDelay(
+          200,
+          withTiming(0, { duration: 800 })
+        );
+      });
+    }
   }, []);
 
   const subtitleStyle = useAnimatedStyle(() => ({
@@ -52,13 +57,11 @@ export default function LandingPage() {
   }));
 
   const handleLogin = () => {
-    console.log("Navigate to login");
-    router.push("/login");
+    router.push("/(auth)/login");
   };
 
   const handleSignUp = () => {
-    console.log("Navigate to signup");
-    router.push("/signup");
+    router.push("/(auth)/signup");
   };
 
   const AuthButton = ({
@@ -122,10 +125,14 @@ export default function LandingPage() {
                 );
 
                 return {
-                  opacity: withSpring(letterProgress, { damping: 15 }),
+                  opacity: hasPlayedAnimation
+                    ? 1
+                    : withSpring(letterProgress, { damping: 15 }),
                   transform: [
                     {
-                      scale: withSpring(letterProgress, { damping: 15 }),
+                      scale: hasPlayedAnimation
+                        ? 1
+                        : withSpring(letterProgress, { damping: 15 }),
                     },
                   ],
                 };

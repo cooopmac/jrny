@@ -12,7 +12,7 @@ export default function Card() {
         <CircularProgress
           value={50}
           valueSuffix="%"
-          radius={40}
+          radius={30}
           maxValue={100}
           inActiveStrokeColor="white"
           inActiveStrokeOpacity={1}
