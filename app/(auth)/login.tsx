@@ -316,7 +316,7 @@ export default function LoginPage() {
             >
               <Text style={styles.signupText}>
                 don't have an account?{" "}
-                <Text style={styles.signupBold}>sign up</Text>
+                <Text style={styles.signupBold}>sign up.</Text>
               </Text>
             </TouchableOpacity>
           </Animated.View>
