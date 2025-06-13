@@ -1,3 +1,4 @@
+import { JourneyDisplay } from "@/types/journey";
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Animated, {
@@ -10,12 +11,25 @@ import Animated, {
 const AnimatedTouchableOpacity =
   Animated.createAnimatedComponent(TouchableOpacity);
 
+const CATEGORIES = [
+  { id: "business", label: "Business", color: "#8b5cf6" },
+  { id: "learning", label: "Learning", color: "#06b6d4" },
+  { id: "fitness", label: "Fitness", color: "#f59e0b" },
+  { id: "personal", label: "Personal", color: "#10b981" },
+] as const;
+
+const STATUS_COLORS = {
+  Planned: "#f59e0b", // Yellow
+  Active: "#10b981", // Green
+  Completed: "#ef4444", // Red
+} as const;
+
 export default function JourneyCard({
   journey,
   onPress,
 }: {
-  journey: any;
-  onPress: (journey: any) => void;
+  journey: JourneyDisplay;
+  onPress: (journey: JourneyDisplay) => void;
 }) {
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
@@ -35,6 +49,10 @@ export default function JourneyCard({
     onPress(journey);
   };
 
+  const category = CATEGORIES.find((cat) => cat.id === journey.category);
+  const statusColor =
+    STATUS_COLORS[journey.status as keyof typeof STATUS_COLORS] || "#6b7280";
+
   return (
     <AnimatedTouchableOpacity
       style={[styles.journeyCard, animatedStyle]}
@@ -44,13 +62,33 @@ export default function JourneyCard({
       <View style={styles.journeyContent}>
         <View style={styles.journeyInfo}>
           <Text style={styles.journeyTitle}>{journey.title}</Text>
-          <Text style={styles.nextStep}>{journey.nextStep}</Text>
+          <Text style={styles.description}>{journey.description}</Text>
+          <View style={styles.metadata}>
+            <View style={styles.statusContainer}>
+              <View
+                style={[styles.statusDot, { backgroundColor: statusColor }]}
+              />
+              <Text style={styles.status}>{journey.status}</Text>
+            </View>
+            <Text
+              style={[
+                styles.category,
+                {
+                  backgroundColor: journey.color,
+                  color: "white",
+                },
+              ]}
+            >
+              {category?.label || journey.category}
+            </Text>
+            <Text style={styles.priority}>{journey.priority}</Text>
+            {journey.lengthOfTime && (
+              <Text style={styles.lengthOfTime}>{journey.lengthOfTime}</Text>
+            )}
+          </View>
         </View>
 
         <View style={styles.progressSection}>
-          <View
-            style={[styles.categoryDot, { backgroundColor: journey.color }]}
-          />
           <Text style={styles.progressText}>{journey.progress}%</Text>
         </View>
       </View>
@@ -96,20 +134,59 @@ const styles = StyleSheet.create({
     color: "#000000",
     marginBottom: 4,
   },
-  nextStep: {
+  description: {
     fontSize: 14,
     fontFamily: "Gabarito-Regular",
     color: "#6b7280",
+    marginBottom: 8,
   },
-  progressSection: {
-    alignItems: "flex-end",
+  metadata: {
+    flexDirection: "row",
+    gap: 8,
+    alignItems: "center",
   },
-  categoryDot: {
-    marginTop: 4,
+  statusContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  statusDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    marginBottom: 4,
+  },
+  status: {
+    fontSize: 12,
+    fontFamily: "Gabarito-Medium",
+    color: "#4b5563",
+  },
+  category: {
+    fontSize: 12,
+    fontFamily: "Gabarito-Medium",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  priority: {
+    fontSize: 12,
+    fontFamily: "Gabarito-Medium",
+    color: "#4b5563",
+    backgroundColor: "#f3f4f6",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  lengthOfTime: {
+    fontSize: 12,
+    fontFamily: "Gabarito-Medium",
+    color: "#4b5563",
+    backgroundColor: "#f3f4f6",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  progressSection: {
+    alignItems: "flex-end",
   },
   progressText: {
     fontSize: 16,

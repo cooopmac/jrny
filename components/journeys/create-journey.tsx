@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 20,
     marginHorizontal: 20,
-    marginBottom: 24,
+    marginBottom: 15,
     borderWidth: 2,
     borderColor: "#e5e7eb",
     borderStyle: "dashed",

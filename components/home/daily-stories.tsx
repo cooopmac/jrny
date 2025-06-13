@@ -1,6 +1,9 @@
 // StoriesSection.js
+import { Journey } from "@/types/journey";
+import { supabase } from "@/utils/supabase";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
+import { useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   Dimensions,
@@ -27,53 +30,15 @@ import Animated, {
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
-// Sample data for stories
-const storiesData = [
-  {
-    id: 1,
-    title: "NASA",
-    image: "https://upload.wikimedia.org/wikipedia/commons/e/e5/NASA_logo.svg",
-    backgroundColor: "black",
-    tasks: [
-      { id: 1, text: "Review mission parameters", completed: true },
-      { id: 2, text: "Complete astronaut training module", completed: false },
-      { id: 3, text: "Submit research proposal", completed: false },
-      { id: 4, text: "Attend team briefing", completed: true },
-    ],
-  },
-  {
-    id: 2,
-    title: "Fitness",
-    backgroundColor: "#FF6B6B",
-    tasks: [
-      { id: 1, text: "Morning workout - 30 mins", completed: false },
-      { id: 2, text: "Drink 8 glasses of water", completed: false },
-      { id: 3, text: "10,000 steps", completed: false },
-      { id: 4, text: "Stretching routine", completed: false },
-    ],
-  },
-  {
-    id: 3,
-    title: "Learning",
-    backgroundColor: "#4ECDC4",
-    tasks: [
-      { id: 1, text: "Read 20 pages", completed: true },
-      { id: 2, text: "Complete online course module", completed: false },
-      { id: 3, text: "Practice new skill for 30 mins", completed: false },
-      { id: 4, text: "Review notes", completed: false },
-    ],
-  },
-];
-
 // Story Circle Component with Gradient
 const StoryCircle = ({
-  story,
+  journey,
   onPress,
   index,
   isViewed,
 }: {
-  story: any;
-  onPress: (story: any) => void;
+  journey: Journey;
+  onPress: (journey: Journey) => void;
   index: number;
   isViewed: boolean;
 }) => {
@@ -108,7 +73,7 @@ const StoryCircle = ({
 
   return (
     <TouchableOpacity
-      onPress={() => onPress(story)}
+      onPress={() => onPress(journey)}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       activeOpacity={1}
@@ -121,10 +86,10 @@ const StoryCircle = ({
             <View
               style={[
                 styles.storyImageContainer,
-                { backgroundColor: story.backgroundColor },
+                { backgroundColor: journey.color },
               ]}
             >
-              <Text style={styles.storyInitial}>{story.title[0]}</Text>
+              <Text style={styles.storyInitial}>{journey.title[0]}</Text>
             </View>
           </View>
         ) : (
@@ -139,22 +104,24 @@ const StoryCircle = ({
               <View
                 style={[
                   styles.storyImageContainer,
-                  { backgroundColor: story.backgroundColor },
+                  { backgroundColor: journey.color },
                 ]}
               >
-                <Text style={styles.storyInitial}>{story.title[0]}</Text>
+                <Text style={styles.storyInitial}>{journey.title[0]}</Text>
               </View>
             </View>
           </LinearGradient>
         )}
       </Animated.View>
-      <Text style={styles.storyTitle}>{story.title.toLowerCase()}</Text>
+      <Text style={styles.storyTitle} numberOfLines={1} ellipsizeMode="tail">
+        {journey.title.toLowerCase()}
+      </Text>
     </TouchableOpacity>
   );
 };
 
 // Task Item Component
-const TaskItem = ({ task, index }: { task: any; index: number }) => {
+const TaskItem = ({ task, index }: { task: string; index: number }) => {
   const translateX = useSharedValue(-SCREEN_WIDTH);
   const opacity = useSharedValue(0);
 
@@ -175,27 +142,21 @@ const TaskItem = ({ task, index }: { task: any; index: number }) => {
 
   return (
     <Animated.View style={[styles.taskItem, animatedStyle]}>
-      <View
-        style={[styles.checkbox, task.completed && styles.checkboxCompleted]}
-      >
-        {task.completed && <Text style={styles.checkmark}>✓</Text>}
+      <View style={styles.checkbox}>
+        <Text style={styles.checkmark}>•</Text>
       </View>
-      <Text
-        style={[styles.taskText, task.completed && styles.taskTextCompleted]}
-      >
-        {task.text}
-      </Text>
+      <Text style={styles.taskText}>{task}</Text>
     </Animated.View>
   );
 };
 
 // Story Card Modal Component
 const StoryCard = ({
-  story,
+  journey,
   visible,
   onClose,
 }: {
-  story: any;
+  journey: Journey;
   visible: boolean;
   onClose: () => void;
 }) => {
@@ -240,12 +201,7 @@ const StoryCard = ({
     },
   });
 
-  if (!story) return null;
-
-  const completedTasks = story.tasks.filter(
-    (task: any) => task.completed
-  ).length;
-  const progress = (completedTasks / story.tasks.length) * 100;
+  if (!journey) return null;
 
   return (
     <Modal
@@ -267,34 +223,52 @@ const StoryCard = ({
             <View style={styles.dragIndicator} />
 
             <View
-              style={[
-                styles.cardHeader,
-                { backgroundColor: story.backgroundColor },
-              ]}
+              style={[styles.cardHeader, { backgroundColor: journey.color }]}
             >
               <View style={styles.cardIconContainer}>
-                <Text style={styles.cardIcon}>{story.title[0]}</Text>
+                <Text style={styles.cardIcon}>{journey.title[0]}</Text>
               </View>
-              <Text style={styles.cardTitle}>{story.title.toLowerCase()}</Text>
+              <Text style={styles.cardTitle}>
+                {journey.title.toLowerCase()}
+              </Text>
             </View>
 
             <View style={styles.cardContent}>
               <View style={styles.progressSection}>
-                <Text style={styles.progressText}>today's progress.</Text>
+                <Text style={styles.progressText}>progress.</Text>
                 <View style={styles.progressBar}>
                   <View
-                    style={[styles.progressFill, { width: `${progress}%` }]}
+                    style={[
+                      styles.progressFill,
+                      {
+                        width: `${journey.progress}%`,
+                        backgroundColor: journey.color,
+                      },
+                    ]}
                   />
                 </View>
                 <Text style={styles.progressPercentage}>
-                  {completedTasks}/{story.tasks.length} tasks completed
+                  {journey.progress}% complete
                 </Text>
               </View>
 
-              <Text style={styles.tasksTitle}>daily tasks.</Text>
-              {story.tasks.map((task: any, index: any) => (
-                <TaskItem key={task.id} task={task} index={index} />
-              ))}
+              {journey.description && (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>description.</Text>
+                  <Text style={styles.descriptionText}>
+                    {journey.description}
+                  </Text>
+                </View>
+              )}
+
+              {journey.daily_tasks && journey.daily_tasks.length > 0 && (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>daily tasks.</Text>
+                  {journey.daily_tasks.map((task, index) => (
+                    <TaskItem key={index} task={task} index={index} />
+                  ))}
+                </View>
+              )}
             </View>
           </Animated.View>
         </PanGestureHandler>
@@ -305,14 +279,49 @@ const StoryCard = ({
 
 // Main Component
 export default function StoriesSection() {
-  const [selectedStory, setSelectedStory] = useState(null);
+  const [journeys, setJourneys] = useState<Journey[]>([]);
+  const [selectedJourney, setSelectedJourney] = useState<Journey | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [viewedStories, setViewedStories] = useState<Set<number>>(new Set());
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchJourneys = useCallback(async () => {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        throw new Error("No user found");
+      }
+
+      const { data, error } = await supabase
+        .from("journeys")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      setJourneys(data || []);
+    } catch (error: any) {
+      console.error("Error fetching journeys:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   // Load viewed stories and check if it's a new day
   useEffect(() => {
     loadViewedStories();
   }, []);
+
+  // Refresh journeys when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      fetchJourneys();
+    }, [fetchJourneys])
+  );
 
   const loadViewedStories = async () => {
     try {
@@ -334,10 +343,10 @@ export default function StoriesSection() {
     }
   };
 
-  const markStoryAsViewed = async (storyId: number) => {
+  const markStoryAsViewed = async (journeyId: number) => {
     try {
       const newViewedStories = new Set(viewedStories);
-      newViewedStories.add(storyId);
+      newViewedStories.add(journeyId);
       setViewedStories(newViewedStories);
 
       await AsyncStorage.setItem(
@@ -350,18 +359,41 @@ export default function StoriesSection() {
   };
 
   const handleStoryPress = useCallback(
-    (story: any) => {
-      setSelectedStory(story);
+    (journey: Journey) => {
+      setSelectedJourney(journey);
       setModalVisible(true);
-      markStoryAsViewed(story.id);
+      markStoryAsViewed(journey.id);
     },
     [viewedStories]
   );
 
   const handleCloseModal = useCallback(() => {
     setModalVisible(false);
-    setTimeout(() => setSelectedStory(null), 300);
+    setTimeout(() => setSelectedJourney(null), 300);
   }, []);
+
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Loading journeys...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (journeys.length === 0) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>No journeys yet</Text>
+          <Text style={styles.emptySubtext}>
+            Start your first journey to see it here
+          </Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -372,19 +404,19 @@ export default function StoriesSection() {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.storiesScrollContainer}
       >
-        {storiesData.map((story, index) => (
+        {journeys.map((journey, index) => (
           <StoryCircle
-            key={story.id}
-            story={story}
+            key={journey.id}
+            journey={journey}
             index={index}
             onPress={handleStoryPress}
-            isViewed={viewedStories.has(story.id)}
+            isViewed={viewedStories.has(journey.id)}
           />
         ))}
       </ScrollView>
 
       <StoryCard
-        story={selectedStory}
+        journey={selectedJourney!}
         visible={modalVisible}
         onClose={handleCloseModal}
       />
@@ -396,6 +428,30 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: "white",
     paddingTop: 10,
+  },
+  loadingContainer: {
+    padding: 20,
+    alignItems: "center",
+  },
+  loadingText: {
+    fontFamily: "Gabarito-Regular",
+    fontSize: 16,
+    color: "#666",
+  },
+  emptyContainer: {
+    padding: 20,
+    alignItems: "center",
+  },
+  emptyText: {
+    fontFamily: "Gabarito-Bold",
+    fontSize: 18,
+    color: "#333",
+    marginBottom: 8,
+  },
+  emptySubtext: {
+    fontFamily: "Gabarito-Regular",
+    fontSize: 14,
+    color: "#666",
   },
   storiesScrollContainer: {
     paddingHorizontal: 10,
@@ -448,6 +504,8 @@ const styles = StyleSheet.create({
     fontFamily: "Gabarito-Regular",
     fontSize: 12,
     color: "#333",
+    maxWidth: 70,
+    textAlign: "center",
   },
   modalContainer: {
     flex: 1,
@@ -517,7 +575,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   progressSection: {
-    marginBottom: 10,
+    marginBottom: 24,
   },
   progressText: {
     fontFamily: "Gabarito-Regular",
@@ -534,7 +592,6 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: "100%",
-    backgroundColor: "#4CAF50",
     borderRadius: 4,
   },
   progressPercentage: {
@@ -542,11 +599,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#888",
   },
-  tasksTitle: {
+  section: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
     fontFamily: "Gabarito-ExtraBold",
     fontSize: 20,
     marginBottom: 10,
     color: "#333",
+  },
+  descriptionText: {
+    fontFamily: "Gabarito-Regular",
+    fontSize: 16,
+    color: "#666",
+    lineHeight: 24,
   },
   taskItem: {
     flexDirection: "row",
@@ -567,23 +633,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  checkboxCompleted: {
-    backgroundColor: "#4CAF50",
-    borderColor: "#4CAF50",
-  },
   checkmark: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "bold",
+    color: "#666",
+    fontSize: 20,
   },
   taskText: {
     fontFamily: "Gabarito-Regular",
     fontSize: 16,
     color: "#333",
     flex: 1,
-  },
-  taskTextCompleted: {
-    textDecorationLine: "line-through",
-    color: "#999",
   },
 });
