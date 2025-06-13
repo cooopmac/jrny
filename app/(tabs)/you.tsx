@@ -1,8 +1,23 @@
 import { supabase } from "@/utils/supabase"; // Update this path to your supabase.ts location
 import { router } from "expo-router";
+import { useEffect, useState } from "react";
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function You() {
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Get the current user's email
+    const getUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setUserEmail(user?.email || null);
+    };
+
+    getUser();
+  }, []);
+
   const handleSignOut = async () => {
     try {
       const { error } = await supabase.auth.signOut();
@@ -19,6 +34,8 @@ export default function You() {
     <View style={styles.container}>
       <Text style={styles.title}>You</Text>
 
+      {userEmail && <Text style={styles.email}>{userEmail}</Text>}
+
       <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
         <Text style={styles.signOutText}>Sign Out</Text>
       </TouchableOpacity>
@@ -29,20 +46,24 @@ export default function You() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    padding: 20,
     backgroundColor: "white",
   },
   title: {
     fontSize: 24,
     fontWeight: "bold",
-    marginBottom: 40,
+    marginBottom: 20,
+  },
+  email: {
+    fontSize: 16,
+    color: "#666",
+    marginBottom: 20,
   },
   signOutButton: {
-    backgroundColor: "#ef4444",
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 8,
+    backgroundColor: "#000",
+    padding: 15,
+    borderRadius: 10,
+    alignItems: "center",
   },
   signOutText: {
     color: "white",

@@ -315,7 +315,7 @@ export default function LoginPage() {
               onPress={handleSignupNavigation}
             >
               <Text style={styles.signupText}>
-                don't have an account?{" "}
+                don't have an account?
                 <Text style={styles.signupBold}>sign up.</Text>
               </Text>
             </TouchableOpacity>
