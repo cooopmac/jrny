@@ -108,7 +108,7 @@ export default function CreateJourneyScreen() {
                         <TouchableOpacity onPress={() => router.back()}>
                             <Text style={styles.backButton}>← back</Text>
                         </TouchableOpacity>
-                        <Text style={styles.title}>create journey.</Text>
+                        <Text style={styles.title}>create journey. lol</Text>
                         <View style={styles.placeholder} />
                     </View>
 
