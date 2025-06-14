@@ -7,20 +7,20 @@ import Calender from "../../components/home/calender";
 import Header from "../../components/home/header";
 
 export default function HomeScreen() {
-  return (
-    <SafeAreaView style={styles.container}>
-      <Header />
-      <Calender />
-      <DailyStories />
-      <Card />
-      <TodaysFocus />
-    </SafeAreaView>
-  );
+    return (
+        <SafeAreaView style={styles.container}>
+            <Header />
+            <Calender />
+            <DailyStories />
+            <Card />
+            <TodaysFocus />
+        </SafeAreaView>
+    );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "white",
-  },
+    container: {
+        flex: 1,
+        backgroundColor: "white",
+    },
 });
